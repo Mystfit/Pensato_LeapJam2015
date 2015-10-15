@@ -23,7 +23,7 @@ public class UnityNode : MonoBehaviour
 
     public virtual void Awake()
     {
-        AsyncIO.ForceDotNet.Force();
+        //AsyncIO.ForceDotNet.Force();
         if (isStage)
         {
             m_node = new ZstNode(nodeName, stagePort);

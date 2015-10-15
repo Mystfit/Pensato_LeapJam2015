@@ -3,17 +3,23 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using LMWidgets;
+using Utils;
 
 public class SliderToLiveDataBinder : DataBinderSlider
 {
     public LiveLink live;
     public string proxyId;
+    public string parent;
     protected float sliderVal;
+    private Text label;
+    private LiveParameterProxy proxy;
 
-    public void init(LiveLink nodeLink, string id, SliderBase slider)
+    public void init(LiveLink nodeLink, LiveParameterProxy parameter, SliderBase slider)
     {
-        proxyId = id;
+        label = GetComponentInChildren<Text>();
+        label.text = parameter.proxyName;
         live = nodeLink;
+        proxy = parameter;
         AddWidget(slider);
     }
 
@@ -25,8 +31,8 @@ public class SliderToLiveDataBinder : DataBinderSlider
             if (live.connected)
             {
                 Dictionary<string, object> args = new Dictionary<string, object>();
-                args.Add("id", proxyId);
-                args.Add("value", sliderVal);
+                args.Add("id", proxy.id);
+                args.Add("value", sliderVal.Map(0.0f, 1.0f, proxy.min, proxy.max));
                 live.node.updateRemoteMethod(live.peer.methods["param_set"], args);
             }
         }
