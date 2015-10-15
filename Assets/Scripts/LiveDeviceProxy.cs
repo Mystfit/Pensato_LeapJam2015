@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using Utils;
 using System.Collections;
 
 public class LiveDeviceProxy : LiveProxy
@@ -12,10 +13,8 @@ public class LiveDeviceProxy : LiveProxy
 
     void Awake()
     {
-        Transform contents = transform.Find("contents");
-
-        label = contents.Find("title_panel").GetChild(0).gameObject.GetComponent<Text>();
-        parameterParent = contents.Find("parameters");
+        parameterParent = gameObject.FindInChildren("parameters").transform;
+        label = gameObject.FindInChildren("device_label").GetComponent<Text>();
     }
 
     public override void init(string id, string name, string parent)

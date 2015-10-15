@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using ThreadingCollections;
 using System;
 using ZST;
 using NetMQ;
@@ -17,14 +18,16 @@ public class LiveLink : UnityNode {
 
     private Dictionary<string, LiveProxy> m_liveProxies;
     private Queue<LiveProxy> m_freshProxies;
-    private Queue<Func<LiveProxy>> m_queuedProxyCreations;
+    private ConcurrentQueue<Func<LiveProxy>> m_queuedProxyCreations;
+    private ConcurrentQueue<Action> m_queuedProxyRemovals;
 
 
     // Use this for initialization
     void Start () {
         m_liveProxies = new Dictionary<string, LiveProxy>();
         m_freshProxies = new Queue<LiveProxy>();
-        m_queuedProxyCreations = new Queue<Func<LiveProxy>>();
+        m_queuedProxyCreations = new ConcurrentQueue<Func<LiveProxy>>();
+        m_queuedProxyRemovals = new ConcurrentQueue<Action>();
 
         if (node != null)
         {
@@ -70,18 +73,40 @@ public class LiveLink : UnityNode {
                     case "PyroDeviceParameter":
                         float min = float.Parse(liveObjParams["min"].ToString());
                         float max = float.Parse(liveObjParams["max"].ToString());
-                        m_queuedProxyCreations.Enqueue(() => createLiveSliderUI(id, name, parentId, min, max));
+                        Debug.Log("Enqueing parameter: " + id);
+                        string p_id = id;
+                        string p_name = name;
+                        string p_parentId = parentId;
+                        float p_min = min;
+                        float p_max = max;
+                        m_queuedProxyCreations.Enqueue(() => createLiveSliderUI(p_id, p_name, p_parentId, p_min, p_max));
                         break;
                     case "PyroDevice":
-                        m_queuedProxyCreations.Enqueue(() => createLiveDeviceUI(id, name, parentId));
+                        Debug.Log("Enqueing Device: " + id);
+                        string d_id = id;
+                        string d_name = name;
+                        string d_parentId = parentId;
+                        m_queuedProxyCreations.Enqueue(() => createLiveDeviceUI(d_id, d_name, d_parentId));
+
                         break;
                     case "PyroTrack":
-                        m_queuedProxyCreations.Enqueue(() => createLiveTrackUI(id, name, parentId));
+                        Debug.Log("Enqueing Track: " + id);
+                        string t_id = id;
+                        string t_name = name;
+                        string t_parentId = parentId;
+                        m_queuedProxyCreations.Enqueue(() => createLiveTrackUI(t_id, t_name, t_parentId));
                         break;
                 }
             } else if(status == "removed")
             {
-                if(m_liveProxies.ContainsKey(id)) m_liveProxies[id].Destroy();
+                if (m_liveProxies.ContainsKey(id))
+                {
+                    Debug.Log("Removing proxy: " + id);
+                    string proxy_id = id;
+                    m_queuedProxyRemovals.Enqueue(() => m_liveProxies[proxy_id].Destroy());
+                    break;
+                }
+                    
             }
         }
     }
@@ -115,26 +140,26 @@ public class LiveLink : UnityNode {
 
     private LiveTrackProxy createLiveTrackUI(string id, string name, string parent)
     {
+        Debug.Log("Building track: " + id.ToString());
         GameObject trackObj = GameObject.Instantiate(trackPanelPrefab);
         LiveTrackProxy trackProxy = trackObj.AddComponent<LiveTrackProxy>();
         trackProxy.transform.SetParent(uiCenter);
         trackProxy.init(id, name, parent);
-        m_liveProxies[id] = trackProxy;
         return trackProxy;
     }
 
     private LiveDeviceProxy createLiveDeviceUI(string id, string name, string parent)
     {
+        Debug.Log("Building device: " + id.ToString());
         GameObject deviceObj = GameObject.Instantiate(devicePanelPrefab);
         LiveDeviceProxy deviceProxy = deviceObj.AddComponent<LiveDeviceProxy>();
         deviceProxy.init(id, name, parent);
-        m_liveProxies[id] = deviceProxy;
         return deviceProxy;
-
     }
 
     private LiveParameterProxy createLiveSliderUI(string id, string name, string parent, float min, float max)
     {
+        Debug.Log("Building parameters: " + id.ToString());
         GameObject sliderObj = GameObject.Instantiate(sliderPrefab);
         SliderDemo slider = sliderObj.GetComponentInChildren<SliderDemo>();
         LiveParameterProxy parameterProxy = sliderObj.AddComponent<LiveParameterProxy>();
@@ -150,7 +175,9 @@ public class LiveLink : UnityNode {
         //Create all queued proxies
         while (m_queuedProxyCreations.Count > 0)
         {
-            m_freshProxies.Enqueue(m_queuedProxyCreations.Dequeue().Invoke());
+            LiveProxy freshProxy = m_queuedProxyCreations.Dequeue().Invoke();
+            m_freshProxies.Enqueue(freshProxy);
+            m_liveProxies[freshProxy.id] = freshProxy;
         }
 
         List<LiveProxy> orphanProxies = null;
@@ -163,12 +190,13 @@ public class LiveLink : UnityNode {
         while (m_freshProxies.Count > 0)
         {
             LiveProxy freshProxy = m_freshProxies.Dequeue();
+
             if (m_liveProxies.ContainsKey(freshProxy.parentId) && freshProxy.parentId != null)
             {
                 LiveProxy parent = m_liveProxies[freshProxy.parentId];
                 parent.AddChild(freshProxy);
             }
-            else
+            else if(freshProxy.parentId != null)
             {
                 orphanProxies.Add(freshProxy);
             }
@@ -181,8 +209,17 @@ public class LiveLink : UnityNode {
         }
     }
 
+    private void removeQueuedProxies()
+    {
+        while(m_queuedProxyRemovals.Count > 0)
+        {
+            m_queuedProxyRemovals.Dequeue().Invoke();
+        }
+    }
+
     public void Update()
     {
         createQueuedProxies();
+        removeQueuedProxies();
     }
 }

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Linq;
 using System.Collections;
 
 namespace Utils
@@ -9,6 +10,14 @@ namespace Utils
         {
             return (value - fromSource) / (toSource - fromSource) * (toTarget - fromTarget) + fromTarget;
         }
-    }
 
+    }
+    public static class Helper {
+        public static GameObject FindInChildren(this GameObject go, string name)
+        {
+            return (from x in go.GetComponentsInChildren<Transform>()
+                    where x.gameObject.name == name
+                    select x.gameObject).First();
+        }
+    }
 }
