@@ -40,7 +40,7 @@ public class LiveProxy : MonoBehaviour {
 
     public virtual void init(string liveId, string name, string parentId)
     {
-        gameObject.name = name;
+        //gameObject.name = name;
         proxyName = name;
         m_parentId = parentId;
         id = liveId;

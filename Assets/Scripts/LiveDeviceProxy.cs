@@ -19,7 +19,7 @@ public class LiveDeviceProxy : LiveProxy
 
     public override void init(string id, string name, string parent)
     {
-        label.text = proxyName;
+        label.text = name;
         base.init(id, name, parent);
     }
 
