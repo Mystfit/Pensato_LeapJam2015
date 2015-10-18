@@ -40,25 +40,24 @@ public class UnityNode : MonoBehaviour
     IEnumerator CreateNode()
     {
         m_node = new ZstNode(nodeName, stageAddress);
+        m_node.Start();
         yield return new WaitForSeconds(2);
         
-        if (m_node != null)
+        if (m_node.requestRegisterNode())
         {
-            if (m_node.requestRegisterNode())
+            Debug.Log("Successfully registered to stage.");
+            connected = true;
+            Dictionary<string, ZstPeerLink> peers = m_node.requestNodePeerlinks();
+            if (peers.ContainsKey(targetPeer))
             {
-                Debug.Log("Successfully registered to stage.");
-                connected = true;
-                Dictionary<string, ZstPeerLink> peers = m_node.requestNodePeerlinks();
-                if (peers.ContainsKey(targetPeer))
-                {
-                    peer = peers[targetPeer];
-                }
-            }
-            else
-            {
-                Debug.Log("Stage did not respond.");
+                peer = peers[targetPeer];
             }
         }
+        else
+        {
+            Debug.Log("Stage did not respond.");
+        }
+        
         yield return null;
     }
 
