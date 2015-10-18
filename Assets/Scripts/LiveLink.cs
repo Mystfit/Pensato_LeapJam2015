@@ -31,20 +31,26 @@ public class LiveLink : UnityNode {
 
         if (node != null)
         {
-            node.subscribeToNode(peer);
-            node.connectToPeer(peer);
-            node.subscribeToMethod(peer.methods["layout_updated"], layoutUpdated);
+            StartCoroutine("RegisterNode");
+        }
+    }
 
-            try
-            {
-                string layoutJson = node.updateRemoteMethod(peer.methods["song_layout"]).output.ToString();
-                createLiveProxies(deserializeLayout(layoutJson));
+    IEnumerator RegisterNode()
+    {
+        while (!connected) yield return null;
 
-            }
-            catch (NetMQ.NetMQException e)
-            {
-                Debug.Log("Live did not respond. Check your connection.");
-            }
+        node.subscribeToNode(peer);
+        node.connectToPeer(peer);
+        node.subscribeToMethod(peer.methods["layout_updated"], layoutUpdated);
+
+        try
+        {
+            string layoutJson = node.updateRemoteMethod(peer.methods["song_layout"]).output.ToString();
+            createLiveProxies(deserializeLayout(layoutJson));
+        }
+        catch (NetMQ.NetMQException e)
+        {
+            Debug.Log("Live did not respond. Check your connection. " + e.ToString());
         }
     }
 
@@ -202,10 +208,13 @@ public class LiveLink : UnityNode {
             }
         }
 
-        //Proxies with no parent yet, queue for another check next update
-        foreach (LiveProxy orphanProxy in orphanProxies)
+        if (orphanProxies != null)
         {
-            m_freshProxies.Enqueue(orphanProxy);
+            //Proxies with no parent yet, queue for another check next update
+            foreach (LiveProxy orphanProxy in orphanProxies)
+            {
+                m_freshProxies.Enqueue(orphanProxy);
+            }
         }
     }
 

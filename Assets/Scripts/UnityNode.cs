@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -31,26 +32,34 @@ public class UnityNode : MonoBehaviour
             if (!string.IsNullOrEmpty(stageAddress))
             {
                 stageAddress = "tcp://" + stageAddress + ":" + stagePort.ToString();
-                m_node = new ZstNode(nodeName, stageAddress);
-            }
-
-            if (m_node != null)
-            {
-                if (m_node.requestRegisterNode())
-                {
-                    Debug.Log("Successfully registered to stage.");
-                    connected = true;
-                    Dictionary<string, ZstPeerLink> peers = m_node.requestNodePeerlinks();
-                    if(peers.ContainsKey(targetPeer)){
-                        peer = peers[targetPeer];
-                    }
-                }
-                else
-                {
-                    Debug.Log("Stage did not respond.");
-                }
+                StartCoroutine("CreateNode");
             }
         }
+    }
+
+    IEnumerator CreateNode()
+    {
+        m_node = new ZstNode(nodeName, stageAddress);
+        yield return new WaitForSeconds(2);
+        
+        if (m_node != null)
+        {
+            if (m_node.requestRegisterNode())
+            {
+                Debug.Log("Successfully registered to stage.");
+                connected = true;
+                Dictionary<string, ZstPeerLink> peers = m_node.requestNodePeerlinks();
+                if (peers.ContainsKey(targetPeer))
+                {
+                    peer = peers[targetPeer];
+                }
+            }
+            else
+            {
+                Debug.Log("Stage did not respond.");
+            }
+        }
+        yield return null;
     }
 
     /*
