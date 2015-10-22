@@ -162,28 +162,51 @@ public static class GeometryUtils {
 
     public static Vector3[] BuildArcPositions(float radius, float arcLength, int numPoints)
     {
-        return BuildArcPositions(radius, arcLength, numPoints, 0.0f, 0.0f, false);
+        return BuildArcPositions(radius, arcLength, numPoints, 0.0f, 0.0f, false, null);
     }
 
-    public static Vector3[] BuildArcPositions(float radius, float arcLength, int numPoints, float minAngle, float offsetAngle, bool centered)
+    public static Vector3[] BuildArcPositions(float radius, float arcLength, int numPoints, float minAngle, float offsetAngle, bool centered, float[] sizes)
     {
-        Vector3[] points = new Vector3[numPoints];
-        float angleInc = arcLength / numPoints;
+        float[] angles = new float[numPoints];
+        float previousAngle = 0.0f;
+        float totalArcSize = 0.0f;
+        float angleInc = (arcLength / numPoints < minAngle) ? minAngle : arcLength / numPoints;
 
-        if (angleInc < minAngle) angleInc = minAngle;
-        float startAngle = (centered) ? ((numPoints - 1) * angleInc) * 0.5f : 0.0f;
-        startAngle += offsetAngle;
         for (int i = 0; i < numPoints; i++)
         {
-            //Move this to the carousel
+            float theta = (sizes != null) ? previousAngle + ChordAngle(radius, sizes[i]) : i * angleInc;
+            angles[i] = theta;
+            totalArcSize += theta;
+            previousAngle = theta;
+        }
+
+        float startAngle = (centered) ? ((numPoints - 1) * angleInc) * 0.5f : 0.0f;
+        startAngle += offsetAngle;
+        if (centered && sizes != null)
+            startAngle = totalArcSize * 1.0f/numPoints + offsetAngle;
+
+        Vector3[] points = new Vector3[numPoints];
+        for (int i = 0; i < numPoints; i++)
+        {
+            float r = (sizes != null) ? ChordMidpointDistance(radius, sizes[i]) : radius;
             points[i] = new Vector3(
-                Mathf.Cos((i * angleInc) - (startAngle)) * radius,
-                Mathf.Sin((i * angleInc) - (startAngle)) * radius,
+                Mathf.Cos(angles[i] - (startAngle)) * r,
+                Mathf.Sin(angles[i] - (startAngle)) * r,
                 0.0f
             );
         }
 
         return points;
+    }
+
+    public static float ChordMidpointDistance(float radius, float chordLength)
+    {
+        return Mathf.Sqrt(Mathf.Pow(radius, 2) - Mathf.Pow(chordLength, 2) * 0.25f);
+    }
+
+    public static float ChordAngle(float radius, float chordLength)
+    {
+        return 2.0f * Mathf.Asin(chordLength / (radius * 2.0f));
     }
 
     public static Vector3[] BuildTetrahedronVertices(float radius)
