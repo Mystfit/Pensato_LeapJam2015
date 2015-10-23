@@ -15,8 +15,7 @@ public class RadialLayout : LayoutGroup
     public bool fitWidth = false;
     public bool centered = true;
 
-    public enum FacingDirections { INWARDS = 0, OUTWARDS };
-    public FacingDirections facingDirection;
+    public GeometryUtils.FacingDirections facingDirection;
 
     [SerializeField]
     protected bool m_ChildForceExpandWidth = true;
@@ -111,10 +110,9 @@ public class RadialLayout : LayoutGroup
             }
         }
 
-        Vector3[] points = GeometryUtils.BuildArcPositions(radius, arcSize, transform.childCount, 0.0f, startOffset, centered, widths);
+        Vector3[] points = GeometryUtils.BuildArcPositions(radius, arcSize, transform.childCount, 0.0f, startOffset, centered, widths, facingDirection);
         for (int i = 0; i < points.Length; i++)
         {
-            if (i > 0) Debug.DrawLine(points[i - 1], points[i]);
             points[i].z = points[i].y;
             points[i].y = 0.0f;
         }
@@ -124,10 +122,10 @@ public class RadialLayout : LayoutGroup
             RectTransform child = rectChildren[i];
             child.localPosition = points[i];
 
-            if (facingDirection == FacingDirections.INWARDS)
-                child.localRotation = Quaternion.LookRotation(child.localPosition);
+            if (facingDirection == GeometryUtils.FacingDirections.INWARDS)
+                child.rotation = Quaternion.LookRotation(Vector3.Lerp(points[i], points[i + 1], 0.5f) - transform.position);
             else
-                child.LookAt(transform);
+                child.rotation = Quaternion.LookRotation(Vector3.Lerp(points[i+1], points[i], 0.5f) - transform.position);
         }
     }
 

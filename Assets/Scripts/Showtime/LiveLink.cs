@@ -14,6 +14,8 @@ public class LiveLink : UnityNode {
     public GameObject sliderPrefab;
     public GameObject devicePanelPrefab;
     public GameObject trackPanelPrefab;
+    public GameObject songPrefab;
+
     public Transform uiCenter;
 
     private Dictionary<string, LiveProxy> m_liveProxies;
@@ -102,6 +104,13 @@ public class LiveLink : UnityNode {
                         string t_parentId = parentId;
                         m_queuedProxyCreations.Enqueue(() => createLiveTrackUI(t_id, t_name, t_parentId));
                         break;
+                    case "PyroSong":
+                        Debug.Log("Enqueing Track: " + id);
+                        string sng_id = id;
+                        string sng_name = name;
+                        string sng_parentId = parentId;
+                        m_queuedProxyCreations.Enqueue(() => createLiveSongUI(sng_id, sng_name, sng_parentId));
+                        break;
                 }
             } else if(status == "removed")
             {
@@ -142,6 +151,16 @@ public class LiveLink : UnityNode {
         }
 
         return layout;
+    }
+
+    private LiveSongProxy createLiveSongUI(string id, string name, string parent)
+    {
+        Debug.Log("Building song: " + id.ToString());
+        GameObject songObj = GameObject.Instantiate(songPrefab);
+        LiveSongProxy songProxy = songObj.AddComponent<LiveSongProxy>();
+        songProxy.transform.SetParent(uiCenter);
+        songProxy.init(id, name, parent);
+        return songProxy;
     }
 
     private LiveTrackProxy createLiveTrackUI(string id, string name, string parent)
@@ -197,14 +216,17 @@ public class LiveLink : UnityNode {
         {
             LiveProxy freshProxy = m_freshProxies.Dequeue();
 
-            if (m_liveProxies.ContainsKey(freshProxy.parentId) && freshProxy.parentId != null)
+            if (freshProxy.parentId != null)
             {
-                LiveProxy parent = m_liveProxies[freshProxy.parentId];
-                parent.AddChild(freshProxy);
-            }
-            else if(freshProxy.parentId != null)
-            {
-                orphanProxies.Add(freshProxy);
+                if (m_liveProxies.ContainsKey(freshProxy.parentId))
+                {
+                    LiveProxy parent = m_liveProxies[freshProxy.parentId];
+                    parent.AddChild(freshProxy);
+                }
+                else if (freshProxy.parentId != null)
+                {
+                    orphanProxies.Add(freshProxy);
+                }
             }
         }
 

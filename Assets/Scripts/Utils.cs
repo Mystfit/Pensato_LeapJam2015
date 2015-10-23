@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Linq;
 using System.Collections;
+using Utils;
 
 namespace Utils
 {
@@ -18,6 +19,12 @@ namespace Utils
             return (from x in go.GetComponentsInChildren<Transform>()
                     where x.gameObject.name == name
                     select x.gameObject).First();
+        }
+
+        public static T FindComponentInParent<T>(this GameObject go)
+        {
+            if(go.transform.parent != null) return go.FindComponentInParent<T>();
+            return default(T);
         }
     }
 }
