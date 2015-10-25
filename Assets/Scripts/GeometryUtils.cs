@@ -174,23 +174,23 @@ public static class GeometryUtils {
 
         for (int i = 0; i < numPoints; i++)
         {
-            float theta = (sizes != null) ? ChordAngle(radius, sizes[i]) : i * angleInc;
+            float theta = (sizes != null) ? ChordAngle(radius, sizes[i] + minAngle) : i * angleInc;
             angles[i] = theta;
             totalArcSize += theta;
         }
 
-        float startAngle = (centered) ? ((numPoints - 1) * angleInc) * 0.5f : 0.0f;
+        float startAngle = (centered) ? ((numPoints) * angleInc) * 0.5f : 0.0f;
         startAngle += offsetAngle;
         if (centered && sizes != null)
-            startAngle = totalArcSize * 1.0f/numPoints + offsetAngle;
+            startAngle = totalArcSize * 0.5f + offsetAngle;
 
-        Vector3[] points = new Vector3[numPoints+1];
+        Vector3[] points = new Vector3[numPoints + 1];
 
         float totalAngle = startAngle;
         float dirModifier = (direction == FacingDirections.INWARDS) ? -1.0f : 1.0f;
         for (int i = 0; i <= numPoints; i++)
         {
-            for(int j = (i < 1 ? 0 : 1); j < 2 ; j++)
+            for (int j = (i < 1 ? 0 : 1); j < 2; j++)
             {
                 float angle = (i > 0) ? angles[i - 1] * j : 0.0f;
                 points[i] = new Vector3(
@@ -200,7 +200,7 @@ public static class GeometryUtils {
                 );
                 totalAngle -= angle;
             }
-            
+
         }
 
         return points;

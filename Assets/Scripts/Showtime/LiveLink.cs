@@ -15,6 +15,7 @@ public class LiveLink : UnityNode {
     public GameObject devicePanelPrefab;
     public GameObject trackPanelPrefab;
     public GameObject songPrefab;
+    public GameObject clipPrefab;
 
     public Transform uiCenter;
 
@@ -95,7 +96,13 @@ public class LiveLink : UnityNode {
                         string d_name = name;
                         string d_parentId = parentId;
                         m_queuedProxyCreations.Enqueue(() => createLiveDeviceUI(d_id, d_name, d_parentId));
-
+                        break;
+                    case "PyroClip":
+                        Debug.Log("Enqueing Clip: " + id);
+                        string cl_id = id;
+                        string cl_name = name;
+                        string cl_parentId = parentId;
+                        m_queuedProxyCreations.Enqueue(() => createLiveClipUI(cl_id, cl_name, cl_parentId));
                         break;
                     case "PyroTrack":
                         Debug.Log("Enqueing Track: " + id);
@@ -193,6 +200,15 @@ public class LiveLink : UnityNode {
         SliderToLiveDataBinder dataBinder = sliderObj.AddComponent<SliderToLiveDataBinder>();
         dataBinder.init(this, parameterProxy, slider);
         return parameterProxy;
+    }
+
+    private LiveClipProxy createLiveClipUI(string id, string name, string parent)
+    {
+        Debug.Log("Building clip: " + id.ToString());
+        GameObject clipObj = GameObject.Instantiate(clipPrefab);
+        LiveClipProxy clipProxy = clipObj.AddComponent<LiveClipProxy>();
+        clipProxy.init(id, name, parent);
+        return clipProxy;
     }
 
     private void createQueuedProxies()

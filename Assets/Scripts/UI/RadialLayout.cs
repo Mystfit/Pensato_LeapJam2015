@@ -101,16 +101,11 @@ public class RadialLayout : LayoutGroup
             for (int i = 0; i < rectChildren.Count; i++)
             {
                 RectTransform rt = transform.GetChild(i).GetComponent<RectTransform>();
-                float min = LayoutUtility.GetMinSize(rt, 0);
-                float preferred = LayoutUtility.GetPreferredSize(rt, 0);
-                float flexible = LayoutUtility.GetFlexibleSize(rt, 0);
-                float max = preferred;
-                if (flexible > 0.0f) max = size;
-                widths[i] = Mathf.Clamp(rectTransform.rect.size[0], min, max);
+                widths[i] = LayoutUtility.GetMinSize(rt, 0);
             }
         }
 
-        Vector3[] points = GeometryUtils.BuildArcPositions(radius, arcSize, transform.childCount, 0.0f, startOffset, centered, widths, facingDirection);
+        Vector3[] points = GeometryUtils.BuildArcPositions(radius, arcSize, transform.childCount, spacing, startOffset, centered, widths, facingDirection);
         for (int i = 0; i < points.Length; i++)
         {
             points[i].z = points[i].y;

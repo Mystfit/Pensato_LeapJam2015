@@ -25,7 +25,7 @@ public class LiveDeviceProxy : LiveProxy
 
     public override bool AddChild(LiveProxy proxy)
     {
-        proxy.transform.SetParent(parameterParent, false);
+        proxy.transform.SetParent(parameterParent);
         return base.AddChild(proxy);
     }
 }
