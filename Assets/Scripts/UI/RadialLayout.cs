@@ -11,7 +11,7 @@ public class RadialLayout : LayoutGroup
     public float radius;
     public float arcSize;
     public float spacing;
-    public float startOffset = -Mathf.PI * 0.5f;
+    public float startOffset = Mathf.PI * 0.5f;
     public bool fitWidth = false;
     public bool centered = true;
 
