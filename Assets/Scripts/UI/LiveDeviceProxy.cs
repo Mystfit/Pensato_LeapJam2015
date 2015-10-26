@@ -14,7 +14,7 @@ public class LiveDeviceProxy : LiveProxy
 
     void Awake()
     {
-        parameterParent = gameObject.FindInChildren("parameters").transform;
+        parameterParent = gameObject.FindInChildren("content").transform;
         label = gameObject.FindInChildren("device_label").GetComponent<Text>();
     }
 

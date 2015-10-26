@@ -20,10 +20,7 @@ public class SliderToLiveDataBinder : DataBinderSlider
     override protected void setDataModel(float value)
     {
         sliderVal = value;
-        if (proxy != null)
-        {
-            proxy.update_value(sliderVal.Map(0.0f, 1.0f, proxy.min, proxy.max)); 
-        }
+        if (proxy != null) proxy.update_value(sliderVal.Map(0.0f, 1.0f, proxy.min, proxy.max));
     }
 
     override public float GetCurrentData()

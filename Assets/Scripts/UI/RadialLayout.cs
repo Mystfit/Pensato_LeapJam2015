@@ -10,6 +10,7 @@ public class RadialLayout : LayoutGroup
 
     public float radius;
     public float arcSize;
+    public float tilt;
     public float spacing;
     public float startOffset = Mathf.PI * 0.5f;
     public bool fitWidth = false;
@@ -121,6 +122,7 @@ public class RadialLayout : LayoutGroup
                 child.rotation = Quaternion.LookRotation(Vector3.Lerp(points[i], points[i + 1], 0.5f) - transform.position);
             else
                 child.rotation = Quaternion.LookRotation(Vector3.Lerp(points[i+1], points[i], 0.5f) - transform.position);
+            child.Rotate(new Vector3(tilt, 0.0f, 0.0f));
         }
     }
 

@@ -21,7 +21,8 @@ public class LiveParameterProxyController : LiveProxyController<LiveParameterPro
     {
         LiveMessage msg = LiveLink.parseLiveMessage(methodData.output.ToString(), LiveLink.LiveMessageType.VALUE);
         LiveParameterProxy proxy = proxies[msg.id];
-        if (proxy) queueIncomingAction(() => proxy.databinder.SetCurrentData((float)msg.payload));
+        float val = (float)msg.payload;
+        if (proxy) queueIncomingAction(() => proxy.receive_value(val) );
         return null;
     }
 }
