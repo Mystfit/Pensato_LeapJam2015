@@ -2,12 +2,14 @@
 using Utils;
 using UnityEngine.UI;
 using System.Collections;
+using System;
 
 public class LiveTrackProxy : LiveProxy {
 
     private Transform deviceParent;
     private Transform clipParent;
     private Text label;
+    private LiveClipProxy m_playingClip;
 
     void Awake() {
         label = gameObject.FindInChildren("track_label").GetComponent<Text>();
@@ -15,10 +17,10 @@ public class LiveTrackProxy : LiveProxy {
         clipParent = gameObject.FindInChildren("clips").transform;
     }
 
-    public override void init(string id, string name, string parent)
+    public override void init(LiveLink live, string id, string name, string parent)
     {
         label.text = name;
-        base.init(id, name, parent);
+        base.init(live, id, name, parent);
     }
 
     public override bool AddChild(LiveProxy proxy)
@@ -29,4 +31,13 @@ public class LiveTrackProxy : LiveProxy {
             proxy.transform.SetParent(clipParent);
         return base.AddChild(proxy);
     }
+
+    public void playingClip(LiveClipProxy clip)
+    {
+        if(m_playingClip != null) m_playingClip.isPlaying = false;
+        m_playingClip = clip;
+    }
+
+    public override void update_value(object value){}
+    public override void receive_value(object value){}
 }

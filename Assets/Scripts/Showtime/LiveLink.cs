@@ -10,12 +10,11 @@ using Newtonsoft.Json.Serialization;
 
 public class LiveLink : UnityNode {
 
-    public GameObject buttonPrefab;
-    public GameObject sliderPrefab;
-    public GameObject devicePanelPrefab;
-    public GameObject trackPanelPrefab;
-    public GameObject songPrefab;
-    public GameObject clipPrefab;
+    protected LiveSongProxyController m_songController;
+    protected LiveTrackProxyController m_trackController;
+    protected LiveDeviceProxyController m_deviceController;
+    protected LiveParameterProxyController m_parameterController;
+    protected LiveClipProxyController m_clipController;
 
     public Transform uiCenter;
 
@@ -27,15 +26,20 @@ public class LiveLink : UnityNode {
 
     // Use this for initialization
     void Start () {
+        //Proxy queues
         m_liveProxies = new Dictionary<string, LiveProxy>();
         m_freshProxies = new Queue<LiveProxy>();
         m_queuedProxyCreations = new ConcurrentQueue<Func<LiveProxy>>();
         m_queuedProxyRemovals = new ConcurrentQueue<Action>();
 
-        if (node != null)
-        {
-            StartCoroutine("RegisterNode");
-        }
+        //Proxy controllers
+        m_songController = GetComponent<LiveSongProxyController>();
+        m_trackController = GetComponent<LiveTrackProxyController>();
+        m_deviceController = GetComponent<LiveDeviceProxyController>();
+        m_parameterController = GetComponent<LiveParameterProxyController>();
+        m_clipController = GetComponent<LiveClipProxyController>();
+
+        if (node != null) StartCoroutine("RegisterNode");
     }
 
     IEnumerator RegisterNode()
@@ -45,6 +49,12 @@ public class LiveLink : UnityNode {
         node.subscribeToNode(peer);
         node.connectToPeer(peer);
         node.subscribeToMethod(peer.methods["layout_updated"], layoutUpdated);
+
+        m_songController.registerShowtimeListeners();
+        m_trackController.registerShowtimeListeners();
+        m_deviceController.registerShowtimeListeners();
+        m_parameterController.registerShowtimeListeners();
+        m_clipController.registerShowtimeListeners();
 
         try
         {
@@ -80,43 +90,44 @@ public class LiveLink : UnityNode {
     
                 switch (liveObjParams["type"].ToString()){
                     case "PyroDeviceParameter":
+                        Debug.Log("Enqueing parameter: " + id);
                         float min = float.Parse(liveObjParams["min"].ToString());
                         float max = float.Parse(liveObjParams["max"].ToString());
-                        Debug.Log("Enqueing parameter: " + id);
                         string p_id = id;
                         string p_name = name;
                         string p_parentId = parentId;
                         float p_min = min;
                         float p_max = max;
-                        m_queuedProxyCreations.Enqueue(() => createLiveSliderUI(p_id, p_name, p_parentId, p_min, p_max));
+                        float p_startval = float.Parse(liveObjParams["min"].ToString());
+                        m_queuedProxyCreations.Enqueue(() => m_parameterController.createParameter(this, p_id, p_name, p_parentId, p_min, p_max, p_startval));
                         break;
                     case "PyroDevice":
                         Debug.Log("Enqueing Device: " + id);
                         string d_id = id;
                         string d_name = name;
                         string d_parentId = parentId;
-                        m_queuedProxyCreations.Enqueue(() => createLiveDeviceUI(d_id, d_name, d_parentId));
+                        m_queuedProxyCreations.Enqueue(() => m_deviceController.createDevice(this, d_id, d_name, d_parentId));
                         break;
                     case "PyroClip":
                         Debug.Log("Enqueing Clip: " + id);
                         string cl_id = id;
                         string cl_name = name;
                         string cl_parentId = parentId;
-                        m_queuedProxyCreations.Enqueue(() => createLiveClipUI(cl_id, cl_name, cl_parentId));
+                        m_queuedProxyCreations.Enqueue(() => m_clipController.createClip(this, cl_id, cl_name, cl_parentId));
                         break;
                     case "PyroTrack":
                         Debug.Log("Enqueing Track: " + id);
                         string t_id = id;
                         string t_name = name;
                         string t_parentId = parentId;
-                        m_queuedProxyCreations.Enqueue(() => createLiveTrackUI(t_id, t_name, t_parentId));
+                        m_queuedProxyCreations.Enqueue(() => m_trackController.createTrack(this, t_id, t_name, t_parentId));
                         break;
                     case "PyroSong":
-                        Debug.Log("Enqueing Track: " + id);
+                        Debug.Log("Enqueing Song: " + id);
                         string sng_id = id;
                         string sng_name = name;
                         string sng_parentId = parentId;
-                        m_queuedProxyCreations.Enqueue(() => createLiveSongUI(sng_id, sng_name, sng_parentId));
+                        m_queuedProxyCreations.Enqueue(() => m_songController.createSong(this, sng_id, sng_name, sng_parentId));
                         break;
                 }
             } else if(status == "removed")
@@ -135,81 +146,14 @@ public class LiveLink : UnityNode {
 
     private List<Dictionary<string, object>> deserializeLayout(string json)
     {
-        //Need to catch threaded JSON deserialization errors
-        List<string> errors = new List<string>();
-        JsonSerializerSettings settings = new JsonSerializerSettings
-        {
-            Error = delegate (object sender, ErrorEventArgs args) {
-                errors.Add(args.ErrorContext.Error.Message);
-                args.ErrorContext.Handled = true;
-            }
-        };
-
-        //Deserialize JSON
-        Dictionary<string, object> layoutMessage = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, settings);
-        object[] layoutObjects = JsonConvert.DeserializeObject<object[]>(layoutMessage["value"].ToString(), settings);
-        foreach (string e in errors) Debug.Log(e);
-
-        //Deserialize child updates
-        List<Dictionary<string, object>> layout = new List<Dictionary<string, object>>();
-        foreach (object liveObj in layoutObjects)
-        {
+        List < Dictionary < string, object>> layout = new List<Dictionary<string, object>>();
+        LiveMessage msg = LiveLink.parseLiveMessage(json, LiveMessageType.ARRAY);
+        foreach (object liveObj in msg.array)
             layout.Add(JsonConvert.DeserializeObject<Dictionary<string, object>>(liveObj.ToString()));
-        }
 
         return layout;
     }
 
-    private LiveSongProxy createLiveSongUI(string id, string name, string parent)
-    {
-        Debug.Log("Building song: " + id.ToString());
-        GameObject songObj = GameObject.Instantiate(songPrefab);
-        LiveSongProxy songProxy = songObj.AddComponent<LiveSongProxy>();
-        songProxy.transform.SetParent(uiCenter);
-        songProxy.init(id, name, parent);
-        return songProxy;
-    }
-
-    private LiveTrackProxy createLiveTrackUI(string id, string name, string parent)
-    {
-        Debug.Log("Building track: " + id.ToString());
-        GameObject trackObj = GameObject.Instantiate(trackPanelPrefab);
-        LiveTrackProxy trackProxy = trackObj.AddComponent<LiveTrackProxy>();
-        trackProxy.transform.SetParent(uiCenter);
-        trackProxy.init(id, name, parent);
-        return trackProxy;
-    }
-
-    private LiveDeviceProxy createLiveDeviceUI(string id, string name, string parent)
-    {
-        Debug.Log("Building device: " + id.ToString());
-        GameObject deviceObj = GameObject.Instantiate(devicePanelPrefab);
-        LiveDeviceProxy deviceProxy = deviceObj.AddComponent<LiveDeviceProxy>();
-        deviceProxy.init(id, name, parent);
-        return deviceProxy;
-    }
-
-    private LiveParameterProxy createLiveSliderUI(string id, string name, string parent, float min, float max)
-    {
-        Debug.Log("Building parameters: " + id.ToString());
-        GameObject sliderObj = GameObject.Instantiate(sliderPrefab);
-        SliderDemo slider = sliderObj.GetComponentInChildren<SliderDemo>();
-        LiveParameterProxy parameterProxy = sliderObj.AddComponent<LiveParameterProxy>();
-        parameterProxy.init(id, name, parent, min, max);
-
-        SliderToLiveDataBinder dataBinder = sliderObj.AddComponent<SliderToLiveDataBinder>();
-        dataBinder.init(this, parameterProxy, slider);
-        return parameterProxy;
-    }
-
-    private LiveClipProxy createLiveClipUI(string id, string name, string parent)
-    {
-        Debug.Log("Building clip: " + id.ToString());
-        GameObject clipObj = GameObject.Instantiate(clipPrefab);
-        LiveClipProxy clipProxy = clipObj.AddComponent<LiveClipProxy>();
-        clipProxy.init(id, name, parent);
-        return clipProxy;
-    }
 
     private void createQueuedProxies()
     {
@@ -269,4 +213,51 @@ public class LiveLink : UnityNode {
         createQueuedProxies();
         removeQueuedProxies();
     }
+
+    public enum LiveMessageType { ARRAY=0, OBJECT, VALUE };
+    public static LiveMessage parseLiveMessage(string json, LiveMessageType messageType)
+    {
+        //Need to catch threaded JSON deserialization errors
+        List<string> errors = new List<string>();
+        JsonSerializerSettings settings = new JsonSerializerSettings
+        {
+            Error = delegate (object sender, ErrorEventArgs args) {
+                errors.Add(args.ErrorContext.Error.Message);
+                args.ErrorContext.Handled = true;
+            }
+        };
+
+        Dictionary<string, object> msg = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, settings);
+        string id = msg["id"].ToString();
+        string values = msg["value"].ToString();
+
+        switch (messageType)
+        {
+            case LiveMessageType.ARRAY:
+                object[] liveArray = JsonConvert.DeserializeObject<object[]>(values, settings);
+                return new LiveMessage(id, liveArray);
+            case LiveMessageType.OBJECT:
+                Dictionary<string, object> liveObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(values, settings);
+                return new LiveMessage(id, liveObj);
+            case LiveMessageType.VALUE:
+                return new LiveMessage(id, float.Parse(msg["value"].ToString()));
+        }
+      
+        foreach (string e in errors) Debug.Log(e);
+        return new LiveMessage(id, null);
+    }
+}
+
+public struct LiveMessage
+{
+    public string id;
+    public object payload;
+
+    public LiveMessage(string liveId, object livePayload){
+        id = liveId;
+        payload = livePayload;
+    }
+
+    public Dictionary<string, object> dict { get { return (Dictionary<string, object>)payload; } }
+    public object[] array{ get { return (object[])payload; } }
 }

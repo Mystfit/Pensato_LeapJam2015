@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using Utils;
 using System.Collections;
+using System;
 
 public class LiveDeviceProxy : LiveProxy
 {
@@ -17,10 +18,10 @@ public class LiveDeviceProxy : LiveProxy
         label = gameObject.FindInChildren("device_label").GetComponent<Text>();
     }
 
-    public override void init(string id, string name, string parent)
+    public override void init(LiveLink live, string id, string name, string parent)
     {
         label.text = name;
-        base.init(id, name, parent);
+        base.init(live, id, name, parent);
     }
 
     public override bool AddChild(LiveProxy proxy)
@@ -28,4 +29,7 @@ public class LiveDeviceProxy : LiveProxy
         proxy.transform.SetParent(parameterParent);
         return base.AddChild(proxy);
     }
+
+    public override void update_value(object value){}
+    public override void receive_value(object value){}
 }

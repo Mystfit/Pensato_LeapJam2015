@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class LiveProxy : MonoBehaviour {
+public abstract class LiveProxy : MonoBehaviour {
 
     protected HashSet<LiveProxy> m_children;
     protected bool m_isLayoutDirty = true;
@@ -37,11 +38,17 @@ public class LiveProxy : MonoBehaviour {
         get { return m_parent; }
     }
 
-
-    public virtual void init(string liveId, string name, string parentId)
+    private LiveLink m_live;
+    public LiveLink live
     {
-        //gameObject.name = name;
+        get { return m_live; }
+    }
+
+
+    public virtual void init(LiveLink live, string liveId, string name, string parentId)
+    {
         proxyName = name;
+        m_live = live;
         m_parentId = parentId;
         id = liveId;
     }
@@ -67,4 +74,7 @@ public class LiveProxy : MonoBehaviour {
         }
         GameObject.Destroy(gameObject);
     }
+
+    public abstract void update_value(object value);
+    public abstract void receive_value(object value);
 }
