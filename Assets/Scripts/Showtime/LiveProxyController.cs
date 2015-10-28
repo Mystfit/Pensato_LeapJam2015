@@ -6,14 +6,17 @@ using ThreadingCollections;
 
 public class LiveProxyController<T> : MonoBehaviour where T : Component
 {
+    private static LiveProxyController<T> c_instance;
     public GameObject controlPrefab;
     protected LiveLink m_live;
+    protected Dictionary<string, T> m_proxies;
     private ConcurrentQueue<Action> m_queuedActions;
 
-    protected Dictionary<string, T> m_proxies;
+    public static LiveProxyController<T> instance { get { return LiveProxyController<T>.c_instance; } }
 
     void Awake()
     {
+        c_instance = this;
         m_queuedActions = new ConcurrentQueue<Action>();
         m_proxies = new Dictionary<string, T>();
         m_live = GetComponent<LiveLink>();

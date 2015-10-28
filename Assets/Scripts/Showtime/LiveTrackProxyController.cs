@@ -8,6 +8,8 @@ public class LiveTrackProxyController : LiveProxyController<LiveTrackProxy>
         Debug.Log("Building track: " + id.ToString());
         LiveTrackProxy track = createProxyUI(id.ToString());
         track.init(live, id, name, parent);
+        track.gameObject.SetActive(false);
+
         return track;
     }
 }
