@@ -9,10 +9,7 @@ public class TrackSelectButton : MonoBehaviour
     private Text[] m_labels;
     public void setText(string text)
     {
-        for(int i = 0; i < m_labels.Length; i++)
-        {
-            m_labels[i].text = text;
-        }
+        for(int i = 0; i < m_labels.Length; i++) m_labels[i].text = text;
     }
 
 

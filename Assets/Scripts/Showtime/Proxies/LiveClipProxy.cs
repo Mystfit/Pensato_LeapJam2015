@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,14 +8,26 @@ public class LiveClipProxy : LiveProxy
 {
     protected ClipToLiveDatabinder m_dataBinder;
     protected MomentaryButton m_button;
+    private Text[] m_labels;
     public ClipToLiveDatabinder databinder { get { return m_dataBinder; } }
+
+    void Awake()
+    {
+        m_labels = GetComponentsInChildren<Text>();
+    }
 
     public override void init(LiveLink live, string liveId, string name, string liveParent)
     {
         m_button = gameObject.GetComponentInChildren<MomentaryButton>();
         m_dataBinder = gameObject.AddComponent<ClipToLiveDatabinder>();
         m_dataBinder.init(this, m_button);
+        setText(name);
+
         base.init(live, liveId, name, liveParent);
+    }
+
+    public void setText(string text){
+        for (int i = 0; i < m_labels.Length; i++) m_labels[i].text = text;
     }
 
     protected bool m_isTriggered;
