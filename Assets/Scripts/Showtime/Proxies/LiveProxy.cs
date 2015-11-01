@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public abstract class LiveProxy : MonoBehaviour {
+public abstract class LiveProxy : MonoBehaviour{
 
     protected HashSet<LiveProxy> m_children;
     protected bool m_isLayoutDirty = true;
@@ -44,7 +44,6 @@ public abstract class LiveProxy : MonoBehaviour {
         get { return m_live; }
     }
 
-
     public virtual void init(LiveLink live, string liveId, string name, string parentId)
     {
         proxyName = name;
@@ -77,4 +76,8 @@ public abstract class LiveProxy : MonoBehaviour {
 
     public abstract void update_value(object value);
     public abstract void receive_value(object value);
+
+    private bool m_isCloneable;
+    public bool isCloneable { get { return m_isCloneable; } set { m_isCloneable = value; } }
+    public virtual LiveProxy clone(bool canCloneCopy = false){ return null; }
 }

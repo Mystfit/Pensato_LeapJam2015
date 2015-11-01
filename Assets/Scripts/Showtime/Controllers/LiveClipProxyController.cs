@@ -14,6 +14,12 @@ public class LiveClipProxyController : LiveProxyController<LiveClipProxy>
         return clip;
     }
 
+    public override LiveProxy copyProxy(LiveProxy proxy)
+    {
+        LiveClipProxy clip = (LiveClipProxy)proxy;
+        return createClip(clip.live, clip.id, clip.proxyName, clip.parentId);
+    }
+
     public override void registerShowtimeListeners()
     {
         m_live.node.subscribeToMethod(m_live.peer.methods["clip_status"], clip_status);

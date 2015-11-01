@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Utils;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class LiveParameterProxy : LiveProxy
 {
@@ -11,21 +12,14 @@ public class LiveParameterProxy : LiveProxy
     public SliderToLiveDataBinder databinder { get { return m_dataBinder; } }
 
     private float m_min;
-    public float min
-    {
-        set { m_min = value; }
-        get { return m_min; }
-    }
+    public float min{ set { m_min = value; } get { return m_min; } }
 
     private float m_max;
-    public float max
-    {
-        set { m_max = value; }
-        get { return m_max; }
-    }
+    public float max { set { m_max = value; } get { return m_max; } }
 
     public void Awake()
     {
+        isCloneable = true;
         m_label = gameObject.FindInChildren("label").GetComponent<Text>();
     }
 
@@ -53,5 +47,16 @@ public class LiveParameterProxy : LiveProxy
         args.Add("id", id);
         args.Add("value", value);
         live.node.updateRemoteMethod(live.peer.methods["param_set"], args);
+    }
+
+    public override LiveProxy clone(bool cloneIsCopyable = false)
+    {
+        if (isCloneable)
+        {
+            LiveParameterProxy proxy = (LiveParameterProxy)LiveParameterProxyController.instance.copyProxy(this);
+            proxy.isCloneable = cloneIsCopyable;
+            return (LiveProxy)proxy;
+        }
+        return base.clone(cloneIsCopyable);
     }
 }

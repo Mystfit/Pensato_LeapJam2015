@@ -13,6 +13,7 @@ public class LiveClipProxy : LiveProxy
 
     void Awake()
     {
+        isCloneable = true;
         m_labels = GetComponentsInChildren<Text>();
     }
 
@@ -22,7 +23,6 @@ public class LiveClipProxy : LiveProxy
         m_dataBinder = gameObject.AddComponent<ClipToLiveDatabinder>();
         m_dataBinder.init(this, m_button);
         setText(name);
-
         base.init(live, liveId, name, liveParent);
     }
 
@@ -69,5 +69,16 @@ public class LiveClipProxy : LiveProxy
         Dictionary<string, object> args = new Dictionary<string, object>();
         args.Add("id", id);
         live.node.updateRemoteMethod(live.peer.methods["clip_trigger"], args);
+    }
+
+    public override LiveProxy clone(bool cloneIsCopyable = false)
+    {
+        if (isCloneable)
+        {
+            LiveClipProxy proxy = (LiveClipProxy)LiveClipProxyController.instance.copyProxy(this);
+            proxy.isCloneable = cloneIsCopyable;
+            return (LiveProxy)proxy;
+        }
+        return base.clone(cloneIsCopyable);
     }
 }

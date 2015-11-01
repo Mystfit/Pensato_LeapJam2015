@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using ThreadingCollections;
 
-public class LiveProxyController<T> : MonoBehaviour where T : Component
+public abstract class LiveProxyController<T> : MonoBehaviour where T : Component
 {
     private static LiveProxyController<T> c_instance;
     public GameObject controlPrefab;
@@ -49,4 +49,5 @@ public class LiveProxyController<T> : MonoBehaviour where T : Component
     }
 
     public virtual void registerShowtimeListeners() { }
+    public virtual LiveProxy copyProxy(LiveProxy proxy){ throw new NotImplementedException(); }
 }

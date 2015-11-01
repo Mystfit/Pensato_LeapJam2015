@@ -12,6 +12,7 @@ public class LiveTrackProxy : LiveProxy {
     private LiveClipProxy m_playingClip;
 
     void Awake() {
+        isCloneable = false;
         label = gameObject.FindInChildren("track_label").GetComponent<Text>();
         deviceParent = gameObject.FindInChildren("devices").transform;
         clipParent = gameObject.FindInChildren("clips").transform;

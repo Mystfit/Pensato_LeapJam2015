@@ -13,6 +13,7 @@ public class LiveSongProxy : LiveProxy {
     public LiveTrackProxy activeTrack { get { return m_activeTrack; } } 
 
     void Awake () {
+        isCloneable = false;
         trackParent = gameObject.FindInChildren("tracks").transform;
         trackPickerParent = transform.GetChild(1);// gameObject.FindInChildren("track_picker").transform;
     }

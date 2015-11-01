@@ -6,7 +6,6 @@ using System;
 
 public class LiveDeviceProxy : LiveProxy
 {
-
     //ASSUME: Have content/parameters
     //ASSUME: Have contents/Panel/device_label
     private Transform parameterParent;
@@ -14,6 +13,7 @@ public class LiveDeviceProxy : LiveProxy
 
     void Awake()
     {
+        isCloneable = false;
         parameterParent = gameObject.FindInChildren("content").transform;
         label = gameObject.FindInChildren("device_label").GetComponent<Text>();
     }
