@@ -20,7 +20,11 @@ public class SnapGridCell : UIBehaviour
     [SerializeField] private int m_y = 0;
     public int y { get { return m_y; } set { m_y = Math.Max(value, 0); SetDirty(); } }
 
-    #if UNITY_EDITOR
+    [SerializeField]
+    private bool m_forcedOverlap = false;
+    public bool forcedOverlap { get { return m_forcedOverlap; } set { m_forcedOverlap = value; SetDirty(); } }
+
+#if UNITY_EDITOR
     protected override void OnValidate() {SetDirty(); }
     #endif
 

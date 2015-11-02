@@ -120,13 +120,14 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
         }
     }
 
-    bool IGrabbable.IsScaling()
-    {
-        throw new NotImplementedException();
-    }
+    bool IGrabbable.IsScaling{ get { return false; } }
+    bool IGrabbable.IsCloneable { get { return false; } }
 
-    bool IGrabbable.IsCloneable()
+    bool IGrabbable.IsHovered
     {
-        throw new NotImplementedException();
+        get
+        {
+            throw new NotImplementedException();
+        }
     }
 }

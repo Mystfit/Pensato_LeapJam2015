@@ -6,6 +6,8 @@ public class Dock : MonoBehaviour, IDockable
 {
     protected bool m_dockable;
     public bool IsDockable{get { return m_dockable; }}
+
+    public void ContinueHover(Transform hoverObject){}
     public bool IsCloneable() { return false; }
     public bool IsGrabbed() { return false; }
     public bool IsHovered() { return false; }

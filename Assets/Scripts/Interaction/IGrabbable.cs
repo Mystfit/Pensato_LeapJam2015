@@ -5,8 +5,10 @@ public interface IGrabbable
 {
     void OnGrab();
     void OnRelease();
+    void OnStartHover();
+    void OnStopHover();
     bool IsGrabbed {get; }
-    bool IsScaling();
-    bool IsCloneable();
-    bool IsHovered();
+    bool IsScaling { get; }
+    bool IsCloneable { get; }
+    bool IsHovered { get; }
 }

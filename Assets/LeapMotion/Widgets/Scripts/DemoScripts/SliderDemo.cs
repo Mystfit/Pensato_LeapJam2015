@@ -187,7 +187,7 @@ public class SliderDemo : SliderBase
         new_dot.transform.parent = transform.parent;
         dots.Add(new_dot);
       }
-      Destroy(dot);
+      //Destroy(dot);
       UpdateDots();
     }
 

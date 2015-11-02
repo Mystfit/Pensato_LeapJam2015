@@ -93,9 +93,15 @@ public class PensatoGrabbingHand : MonoBehaviour
 
         for (int j = 0; j < close_things.Length; ++j)
         {
-            float sqr_distance = (pinch_position - close_things[j].transform.position).sqrMagnitude;
+            Ray pinch_ray = new Ray(pinch_position, close_things[j].transform.position - pinch_position);
+            RaycastHit pinch_hit;
+            float sqr_distance = 0.0f;
+            if (close_things[j].Raycast(pinch_ray, out pinch_hit, distance * distance))
+                sqr_distance = (pinch_hit.point - close_things[j].transform.position).sqrMagnitude;
 
-            if (sqr_distance < closest_sqr_distance &&
+            //float sqr_distance = (pinch_position - close_things[j].transform.position).sqrMagnitude;
+            bool closeEnough = (sqr_distance < closest_sqr_distance);
+            if (closeEnough &&
                 !close_things[j].transform.IsChildOf(transform) &&
                 close_things[j].tag != "NotGrabbable")
             {
@@ -121,7 +127,7 @@ public class PensatoGrabbingHand : MonoBehaviour
 
         if (hover != active_object_ && active_object_ != null)
         {
-            GrabbableObject old_grabbable = active_object_.GetComponent<GrabbableObject>();
+            IGrabbable old_grabbable = active_object_.GetComponent<IGrabbable>();
 
             if (old_grabbable != null)
                 old_grabbable.OnStopHover();
@@ -129,10 +135,12 @@ public class PensatoGrabbingHand : MonoBehaviour
 
         if (hover != null)
         {
-            GrabbableObject new_grabbable = hover.GetComponent<GrabbableObject>();
+            IGrabbable new_grabbable = hover.GetComponent<IGrabbable>();
 
             if (new_grabbable != null)
+            {
                 new_grabbable.OnStartHover();
+            }
         }
 
         active_object_ = hover;
@@ -224,9 +232,16 @@ public class PensatoGrabbingHand : MonoBehaviour
             if (grabbable == null || grabbable.rotateQuickly)
                 active_object_.GetComponent<Rigidbody>().maxAngularVelocity = last_max_angular_velocity_;
 
+            if (active_closest_dockable_ != null)
+            {
+                active_closest_dockable_.OnDropped(active_object_.transform);
+                active_closest_dockable_.OnHoverEnd(active_object_.transform);
+            }
+
             Leap.Utils.IgnoreCollisions(gameObject, active_object_.gameObject, false);
         }
         active_object_ = null;
+        active_closest_dockable_ = null;
 
         Hover();
     }
@@ -327,12 +342,19 @@ public class PensatoGrabbingHand : MonoBehaviour
         IDockable closestDock = null;
         if (closestCollider != null) closestDock = closestCollider.gameObject.GetComponent<IDockable>();
 
-        if (closestDock != active_closest_dockable_)
+        if (closestDock != active_closest_dockable_ && closestDock != null)
         {
             if(active_closest_dockable_ != null) active_closest_dockable_.OnHoverEnd(transform);
             active_closest_dockable_ = closestDock;
-            active_closest_dockable_.OnHoverStart(transform);
+            active_closest_dockable_.OnHoverStart(active_object_.transform);
         }
+        else if (closestDock == null && active_closest_dockable_ != null)
+        {
+            active_closest_dockable_.OnHoverEnd(transform);
+            active_closest_dockable_ = closestDock;
+        }
+
+        if (active_closest_dockable_ != null) active_closest_dockable_.ContinueHover(active_object_.transform);
     }
 
     // If we are releasing the object only apply a weaker force to the object
