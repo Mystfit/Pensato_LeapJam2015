@@ -122,7 +122,7 @@ public class PensatoGrabbingHand : MonoBehaviour
     // Notify grabbable objects when they are ready to grab :)
     protected void Hover()
     {
-        Func<IGrabbable, bool> isGrabbable = x => !x.IsGrabbed;
+        Func<IGrabbable, bool> isGrabbable = x => !x.IsGrabbed || (x.IsGrabbed && x.IsScalable) ;
         Collider hover = FindClosestComponent<IGrabbable>(current_pinch_position_, grabObjectDistance, isGrabbable);
 
         if (hover != active_object_ && active_object_ != null)
@@ -155,14 +155,21 @@ public class PensatoGrabbingHand : MonoBehaviour
         HandModel hand_model = GetComponent<HandModel>();
         PensatoGrabbable grabbable = active_object_.GetComponent<PensatoGrabbable>();
 
-        //Check if grabbable object needs to be cloned
-        if (grabbable.IsCloneable)
+        //Target is held by the other hand and ready for scaling
+        if(grabbable.IsScalable && grabbable.IsGrabbed)
+        {
+            Debug.Log("Ready to scale");
+        }
+        else if (grabbable.IsCloneable)
         {
             GameObject clone = grabbable.clone();
             grabbable = clone.GetComponent<PensatoGrabbable>();
             grabbable.IsCloneable = false;
             active_object_ = clone.GetComponent<Collider>();
         }
+
+        //Check if grabbable object needs to be cloned
+
         Leap.Utils.IgnoreCollisions(gameObject, active_object_.gameObject, true);
 
         // Setup initial position and rotation conditions.
@@ -180,7 +187,7 @@ public class PensatoGrabbingHand : MonoBehaviour
             // If we raycast hits the object, we're outside the collider so grab the hit point.
             // If not, we're inside the collider so just use the pinch position.
             if (active_object_.Raycast(pinch_ray, out pinch_hit, grabObjectDistance))
-                object_pinch_offset_ = active_object_.transform.position - pinch_hit.point;
+                object_pinch_offset_ = pinch_hit.point - active_object_.transform.position;
             else
                 object_pinch_offset_ = active_object_.transform.position - current_pinch_position_;
         }

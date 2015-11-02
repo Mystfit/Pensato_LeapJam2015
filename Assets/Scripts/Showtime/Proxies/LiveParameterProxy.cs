@@ -8,6 +8,7 @@ using System;
 public class LiveParameterProxy : LiveProxy
 {
     private Text m_label;
+    protected SliderDemo m_slider;
     protected SliderToLiveDataBinder m_dataBinder;
     public SliderToLiveDataBinder databinder { get { return m_dataBinder; } }
 
@@ -25,9 +26,9 @@ public class LiveParameterProxy : LiveProxy
 
     public void init(LiveLink live, string liveId, string name, string liveParent, float minimum, float maximum, float startValue)
     {
-        SliderDemo slider = gameObject.GetComponentInChildren<SliderDemo>();
+        m_slider = gameObject.GetComponentInChildren<SliderDemo>();
         m_dataBinder = gameObject.AddComponent<SliderToLiveDataBinder>();
-        m_dataBinder.init(this, slider, startValue.Map(minimum, maximum, 0.0f, 1.0f));
+        m_dataBinder.init(this, m_slider, startValue.Map(minimum, maximum, 0.0f, 1.0f));
 
         min = minimum;
         max = maximum;
@@ -38,7 +39,8 @@ public class LiveParameterProxy : LiveProxy
 
     public override void receive_value(object value)
     {
-        //m_dataBinder.SetCurrentData((float)value);
+        m_dataBinder.awaitExternalData();
+        m_dataBinder.SetCurrentData((float)value);
     }
 
     public override void update_value(object value)

@@ -8,7 +8,12 @@ public interface IGrabbable
     void OnStartHover();
     void OnStopHover();
     bool IsGrabbed {get; }
-    bool IsScaling { get; }
     bool IsCloneable { get; }
     bool IsHovered { get; }
+
+    void OnStartScale();
+    void ContinueScale(Vector3 scalerA, Vector3 scalerB);
+    void OnStopScale();
+    bool IsScaling { get; }
+    bool IsScalable { get; }
 }

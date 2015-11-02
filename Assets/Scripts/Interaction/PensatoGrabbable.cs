@@ -17,8 +17,10 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
         m_proxy = GetComponent<LiveProxy>();
     }
 
-    private bool scaling_;
+    protected bool scaling_;
+    protected bool scalable_;
     public bool IsScaling { get { return scaling_; } }
+    public bool IsScalable { get { return scalable_; } } 
 
     private bool cloneable_;
     public bool IsCloneable { get { return cloneable_; } set { cloneable_ = value; } }
@@ -82,6 +84,7 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
 
     public virtual void OnGrab()
     {
+        if (IsGrabbed) scaling_ = true;
         grabbed_ = true;
         hovered_ = false;
 
@@ -118,6 +121,21 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
             IsCloneable = !IsCloneable;
             toggleCloneable = false;
         }
+    }
+
+    public void OnStartScale()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ContinueScale(Vector3 scalerA, Vector3 scalerB)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void OnStopScale()
+    {
+        throw new NotImplementedException();
     }
 
     bool IGrabbable.IsScaling{ get { return false; } }
