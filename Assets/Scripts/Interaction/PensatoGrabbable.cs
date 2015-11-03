@@ -87,6 +87,7 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
         if (IsGrabbed) scaling_ = true;
         grabbed_ = true;
         hovered_ = false;
+        transform.SetParent(null);
 
         if (breakableJoint != null)
         {

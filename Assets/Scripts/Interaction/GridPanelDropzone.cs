@@ -39,6 +39,7 @@ public class GridPanelDropzone : MonoBehaviour, IDockable
         m_activeHoverGuide = GameObject.Instantiate(m_hoverGuideGraphics);
         m_activeHoverGuide.transform.SetParent(transform, false);
         m_hoverSnapCell = m_activeHoverGuide.AddComponent<SnapGridCell>();
+        m_hoverSnapCell.forcedOverlap = true;
         m_hoverSnapCell.x = m_hoverSnapCell.y = m_hoverSnapCell.width = m_hoverSnapCell.height = 1;
         UpdateHoverGraphics(hoverObject);
     }
@@ -46,7 +47,9 @@ public class GridPanelDropzone : MonoBehaviour, IDockable
     public void OnHoverEnd(Transform hoverObject)
     {
         m_hoverSnapCell = null;
+        m_activeHoverGuide.transform.SetParent(null);
         GameObject.Destroy(m_activeHoverGuide);
+        //LayoutRebuilder.MarkLayoutForRebuild((RectTransform)m_snapGrid.transform);
     }
 
     public void ContinueHover(Transform hoverObject)
@@ -67,11 +70,11 @@ public class GridPanelDropzone : MonoBehaviour, IDockable
 
         int[] coordinates = m_snapGrid.PositionToCellCoordinates(corners[0]);
         int[] sizes = m_snapGrid.RectToCellSizes((RectTransform)child);
-        int[] offset = new int[2];
-        //int[] offset = m_snapGrid.CalculateOverlapOffset(cell, Math.Max(coordinates[0], 0), Math.Max(coordinates[1], 0));
-        cell.x = coordinates[0] + offset[0];
-        cell.y = coordinates[1] + offset[1];
         cell.width = sizes[0];
         cell.height = sizes[1];
+        int[] offset = m_snapGrid.CalculateOverlapOffset(cell, coordinates[0], coordinates[1]);
+        cell.x = coordinates[0] + offset[0];
+        cell.y = coordinates[1] + offset[1];
+
     }
 }

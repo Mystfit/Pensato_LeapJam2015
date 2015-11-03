@@ -10,8 +10,8 @@ public class SnapGridLayoutGroup : LayoutGroup
     protected Vector2 m_CellSize = new Vector2(100, 100);
     public Vector2 cellSize { get { return m_CellSize; } set { SetProperty(ref m_CellSize, value); } }
 
-    public bool m_overlap = false;
-    public enum OverflowDirection { DOWN = 0, RIGHT};
+    public bool m_allowOverlap = false;
+    public enum OverflowDirection { DOWN = 0, RIGHT, UP, LEFT};
     public OverflowDirection m_overflow;
 
     [SerializeField]
@@ -188,34 +188,101 @@ public class SnapGridLayoutGroup : LayoutGroup
 
     public int[] CalculateOverlapOffset(SnapGridCell cell, int xPos, int yPos)
     {
+        xPos = Math.Max(0, Math.Min(xPos, m_cellColumns));
+        yPos = Math.Max(0, Math.Min(yPos, m_cellRows));
         int[] overlapOffset = new int[2];
+
+        if (xPos > m_cellColumns-1 || yPos > m_cellRows-1) return overlapOffset;
+       
         for (int x = xPos; x < xPos + cell.width; x++)
         {
             for (int y = yPos; y < yPos + cell.height; y++)
             {
-                //Overlapping!
-                if (m_cells[x, y] != cell && !m_overlap)
+                if (x >= m_cellColumns || y >= m_cellRows)
+                    continue;
+
+                if (m_cells[x, y] != null &&
+                    m_cells[x, y] != cell &&
+                    !m_cells[x, y].forcedOverlap &&
+                    !m_allowOverlap 
+                    )
                 {
-                    int offset = 1;
-                    if (m_overflow == OverflowDirection.RIGHT)
-                    {
-                        while (m_cells[(x + offset) % m_cellColumns, y] && x + offset <= m_cellColumns)
-                        {
-                            offset++;
-                        }
-                        overlapOffset[0] = offset;
-                    }
-                    else if (m_overflow == OverflowDirection.DOWN)
-                    {
-                        while (m_cells[x, (y + offset) % m_cellRows] && y + offset <= m_cellRows)
-                        {
-                            offset++;
-                        }
-                        overlapOffset[1] = offset;
-                    }
+                    return NearestValidPosition(cell, xPos, yPos);
                 }
             }
         }
+
+        return overlapOffset;
+    }
+
+    private int[] NearestValidPosition(SnapGridCell cell, int xPos, int yPos)
+    {
+        int[] overlapOffset = new int[2];
+        int shortestOffset = -1;
+        OverflowDirection shortestDir = m_overflow;
+        int offset = 0;
+        OverflowDirection cDir = 0;
+        foreach (OverflowDirection dir in Enum.GetValues(typeof(OverflowDirection)))
+        {
+            offset = 0;
+            switch (dir)
+            {
+                case OverflowDirection.DOWN:
+                    cDir = OverflowDirection.DOWN;
+
+                    while (m_cells[xPos, yPos + offset] != null &&
+                        m_cells[xPos, yPos + offset] != cell &&
+                        yPos + offset <= m_cellRows)
+                    {
+                        offset++;
+                    }
+                    break;
+                case OverflowDirection.RIGHT:
+                    cDir = OverflowDirection.RIGHT;
+                    while (m_cells[xPos + offset, yPos] != null &&
+                        m_cells[xPos + offset, yPos] != cell &&
+                        xPos + offset <= m_cellColumns)
+                    {
+                        offset++;
+                    }
+                    break;
+                case OverflowDirection.UP:
+                    while (m_cells[xPos, yPos + offset] != null &&
+                        m_cells[xPos, yPos + offset] != cell)
+                    {
+                        offset -= cell.height;
+                        if (yPos + offset <= 0)
+                        {
+                            offset = m_cellRows; //Ran out of space. Don't use this direction.
+                            break;
+                        }
+                    }
+                    break;
+                case OverflowDirection.LEFT:
+                    cDir = OverflowDirection.RIGHT;
+                    while (m_cells[xPos + offset, yPos] != null &&
+                        m_cells[xPos + offset, yPos] != cell)
+                    {
+                        offset -= cell.width;
+                        if (xPos + offset <= 0)
+                        {
+                            offset = m_cellColumns; //Ran out of space. Don't use this direction.
+                            break;
+                        }
+                    }
+                    break;
+            }
+
+            if (offset < shortestOffset || shortestOffset < 0)
+            {
+                shortestOffset = offset;
+                shortestDir = cDir;
+            }
+        }
+        if (shortestDir == OverflowDirection.DOWN || shortestDir == OverflowDirection.UP)
+            overlapOffset[1] = shortestOffset;
+        else if (shortestDir == OverflowDirection.LEFT || shortestDir == OverflowDirection.RIGHT)
+            overlapOffset[0] = shortestOffset;
         return overlapOffset;
     }
 }

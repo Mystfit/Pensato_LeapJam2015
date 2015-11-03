@@ -241,8 +241,8 @@ public class PensatoGrabbingHand : MonoBehaviour
 
             if (active_closest_dockable_ != null)
             {
-                active_closest_dockable_.OnDropped(active_object_.transform);
                 active_closest_dockable_.OnHoverEnd(active_object_.transform);
+                active_closest_dockable_.OnDropped(active_object_.transform);
             }
 
             Leap.Utils.IgnoreCollisions(gameObject, active_object_.gameObject, false);
