@@ -56,4 +56,14 @@ public class LiveSongProxy : LiveProxy {
             }
         }
     }
+
+    public override void minimize()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void maximize()
+    {
+        throw new NotImplementedException();
+    }
 }

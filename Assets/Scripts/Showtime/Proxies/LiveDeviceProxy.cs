@@ -32,4 +32,20 @@ public class LiveDeviceProxy : LiveProxy
 
     public override void update_value(object value){}
     public override void receive_value(object value){}
+
+    public override void minimize()
+    {
+        foreach (LiveParameterProxy proxy in m_children)
+        {
+            proxy.gameObject.SetActive(false);
+        }
+    }
+
+    public override void maximize()
+    {
+        foreach (LiveParameterProxy proxy in m_children)
+        {
+            proxy.gameObject.SetActive(true);
+        }
+    }
 }

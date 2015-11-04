@@ -77,6 +77,9 @@ public abstract class LiveProxy : MonoBehaviour{
     public abstract void update_value(object value);
     public abstract void receive_value(object value);
 
+    public abstract void minimize();
+    public abstract void maximize();
+
     private bool m_isCloneable;
     public bool isCloneable { get { return m_isCloneable; } set { m_isCloneable = value; } }
     public virtual LiveProxy clone(bool canCloneCopy = false){ return null; }

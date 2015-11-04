@@ -61,4 +61,14 @@ public class LiveParameterProxy : LiveProxy
         }
         return base.clone(cloneIsCopyable);
     }
+
+    public override void minimize()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void maximize()
+    {
+        throw new NotImplementedException();
+    }
 }

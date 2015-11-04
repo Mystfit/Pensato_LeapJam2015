@@ -81,4 +81,7 @@ public class LiveClipProxy : LiveProxy
         }
         return base.clone(cloneIsCopyable);
     }
+
+    public override void minimize() { }
+    public override void maximize(){}
 }
