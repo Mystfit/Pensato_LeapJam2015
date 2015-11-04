@@ -16,7 +16,7 @@ public class UnityNode : MonoBehaviour
     public bool useLocalhost = false;
     public bool isStage = false;
     public string stageAddress = null;
-    public int stagePort = 6000;
+    public int stagePort;
     public string nodeName = "UnityNode";
     public string targetPeer;
     public ZstPeerLink peer;
@@ -28,19 +28,21 @@ public class UnityNode : MonoBehaviour
         if (isStage)
         {
             m_node = new ZstNode(nodeName, stagePort);
-        } else {
-            if (!string.IsNullOrEmpty(stageAddress))
-            {
+        } else {        
+            if(!String.IsNullOrEmpty(stageAddress))
                 stageAddress = "tcp://" + stageAddress + ":" + stagePort.ToString();
-                StartCoroutine("CreateNode");
-            }
+            StartCoroutine("CreateNode");
         }
     }
 
     IEnumerator CreateNode()
     {
-        m_node = new ZstNode(nodeName, stageAddress);
-        m_node.Start();
+        if(String.IsNullOrEmpty(stageAddress))
+            m_node = new ZstNode(nodeName);
+        else
+            m_node = new ZstNode(nodeName, stageAddress);
+
+        //m_node.Start();
         yield return new WaitForSeconds(2);
         
         if (m_node.requestRegisterNode())
