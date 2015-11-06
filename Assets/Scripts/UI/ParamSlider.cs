@@ -14,6 +14,7 @@ public class ParamSlider : SliderDemo, IHidable
         upperLimit.transform.localPosition = new Vector3(maximizedSize * 0.5f, upperLimit.transform.localPosition.y, upperLimit.transform.localPosition.z);
         lowerLimit.transform.localPosition = new Vector3(maximizedSize * -0.5f, lowerLimit.transform.localPosition.y, lowerLimit.transform.localPosition.z);
         inactiveBar.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+        unlockSlider();
     }
 
     public void minimize()
@@ -21,6 +22,17 @@ public class ParamSlider : SliderDemo, IHidable
         upperLimit.transform.localPosition = new Vector3(minimizedSize * 0.5f, upperLimit.transform.localPosition.y, upperLimit.transform.localPosition.z);
         lowerLimit.transform.localPosition = new Vector3(minimizedSize * -0.5f, lowerLimit.transform.localPosition.y, lowerLimit.transform.localPosition.z);
         inactiveBar.localScale = new Vector3(0.0f, 1.0f, 1.0f);
+        lockSlider();
+    }
+
+    public void lockSlider()
+    {
+        GetComponent<Collider>().enabled = false;
+    }
+
+    public void unlockSlider()
+    {
+        GetComponent<Collider>().enabled = true;
     }
 
     public Transform inactiveBar;

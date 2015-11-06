@@ -37,6 +37,8 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
         m_parameters.sizeDelta = new Vector2(minimizedWidth, m_parameters.sizeDelta.y);
         m_viewport.sizeDelta = new Vector2(minimizedWidth, m_viewport.sizeDelta.y);
         m_content.sizeDelta = new Vector2(minimizedWidth, m_content.sizeDelta.y);
+        m_upScroll.gameObject.SetActive(false);
+        m_downScroll.gameObject.SetActive(false);
 
         LayoutRebuilder.MarkLayoutForRebuild(m_rect);
         m_isMinimized = true;
@@ -59,6 +61,8 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
         m_parameters.sizeDelta = new Vector2(maximizedWidth, m_parameters.sizeDelta.y);
         m_viewport.sizeDelta = new Vector2(maximizedWidth, m_viewport.sizeDelta.y);
         m_content.sizeDelta = new Vector2(maximizedWidth, m_content.sizeDelta.y);
+        m_upScroll.gameObject.SetActive(true);
+        m_downScroll.gameObject.SetActive(true);
 
         LayoutRebuilder.MarkLayoutForRebuild((RectTransform)transform);
         m_isMinimized = false;
@@ -72,6 +76,8 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
     public RectTransform m_parameters;
     public RectTransform m_viewport;
     public RectTransform m_content;
+    public RectTransform m_upScroll;
+    public RectTransform m_downScroll;
     public void loadAssets()
     {
         if (m_rect == null ||
@@ -87,6 +93,8 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
             m_parameters = transform.Find("parameters").GetComponent<RectTransform>();
             m_viewport = m_parameters.Find("viewport").GetComponent<RectTransform>();
             m_content = m_viewport.Find("content").GetComponent<RectTransform>();
+            m_upScroll = transform.Find("scroll_up").GetComponent<RectTransform>();
+            m_downScroll = transform.Find("scroll_down").GetComponent<RectTransform>();
         }
     }
 }
