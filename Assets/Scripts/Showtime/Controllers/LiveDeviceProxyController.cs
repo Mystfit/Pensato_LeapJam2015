@@ -13,31 +13,4 @@ public class LiveDeviceProxyController : LiveProxyController<LiveDeviceProxy>
         device.init(live, id, name, parent);
         return device;
     }
-
-    public LiveProxy focusedLookDevice()
-    {
-        if (proxies.Count == 1)
-            return proxies.Values.First();
-                
-        float smallestAngle = -1.0f;
-        LiveProxy closestLookTarget = null;
-
-        foreach(LiveProxy proxy in proxies.Values)
-        {
-            if (proxy.isActiveAndEnabled)
-            {
-                float angle = Vector3.Angle(vr_eye.forward, proxy.transform.position - vr_eye.position);
-
-                if (smallestAngle < 0.0f)
-                    smallestAngle = angle;
-
-                if (angle <= smallestAngle)
-                {
-                    smallestAngle = angle;
-                    closestLookTarget = proxy;
-                }
-            }
-        }
-        return closestLookTarget;
-    }
 }

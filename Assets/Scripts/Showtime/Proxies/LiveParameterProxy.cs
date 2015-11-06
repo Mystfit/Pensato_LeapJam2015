@@ -5,11 +5,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
+[RequireComponent(typeof(SliderToLiveDataBinder))]
 public class LiveParameterProxy : LiveProxy
 {
+    [NonSerialized]
     private Text m_label;
-    protected SliderDemo m_slider;
-    protected SliderToLiveDataBinder m_dataBinder;
+    private SliderDemo m_slider;
+
+    [NonSerialized]
+    private SliderToLiveDataBinder m_dataBinder;
     public SliderToLiveDataBinder databinder { get { return m_dataBinder; } }
 
     private float m_min;
@@ -27,7 +31,7 @@ public class LiveParameterProxy : LiveProxy
     public void init(LiveLink live, string liveId, string name, string liveParent, float minimum, float maximum, float startValue)
     {
         m_slider = gameObject.GetComponentInChildren<SliderDemo>();
-        m_dataBinder = gameObject.AddComponent<SliderToLiveDataBinder>();
+        m_dataBinder = gameObject.GetComponent<SliderToLiveDataBinder>();
         m_dataBinder.init(this, m_slider, startValue.Map(minimum, maximum, 0.0f, 1.0f));
 
         min = minimum;
@@ -60,15 +64,5 @@ public class LiveParameterProxy : LiveProxy
             return (LiveProxy)proxy;
         }
         return base.clone(cloneIsCopyable);
-    }
-
-    public override void minimize()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override void maximize()
-    {
-        throw new NotImplementedException();
     }
 }

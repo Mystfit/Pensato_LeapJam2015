@@ -45,25 +45,4 @@ public class LiveSongProxy : LiveProxy {
         m_activeTrack = track;
         m_activeTrack.gameObject.SetActive(true);
     }
-
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            foreach(LiveTrackProxy p in m_children)
-            {
-                p.gameObject.SetActive(false);
-            }
-        }
-    }
-
-    public override void minimize()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override void maximize()
-    {
-        throw new NotImplementedException();
-    }
 }

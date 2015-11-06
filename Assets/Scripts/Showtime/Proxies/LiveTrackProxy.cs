@@ -42,20 +42,4 @@ public class LiveTrackProxy : LiveProxy {
 
     public override void update_value(object value){}
     public override void receive_value(object value){}
-
-    void Update()
-    {
-        LiveProxy focussedGazeProxy = ((LiveDeviceProxyController)LiveDeviceProxyController.instance).focusedLookDevice();
-        if (focussedGazeProxy != m_activeFocussedDevice)
-        {
-            if(m_activeFocussedDevice != null)
-                m_activeFocussedDevice.minimize();
-            m_activeFocussedDevice =(LiveDeviceProxy) focussedGazeProxy;
-            m_activeFocussedDevice.maximize();
-            Debug.Log(m_activeFocussedDevice);
-        }
-    }
-
-    public override void minimize(){}
-    public override void maximize(){}
 }

@@ -6,8 +6,9 @@ using System.Collections.Generic;
 
 public class LiveClipProxy : LiveProxy
 {
-    protected ClipToLiveDatabinder m_dataBinder;
-    protected MomentaryButton m_button;
+    [NonSerialized]
+    private ClipToLiveDatabinder m_dataBinder;
+    private MomentaryButton m_button;
     private Text[] m_labels;
     public ClipToLiveDatabinder databinder { get { return m_dataBinder; } }
 
@@ -81,7 +82,4 @@ public class LiveClipProxy : LiveProxy
         }
         return base.clone(cloneIsCopyable);
     }
-
-    public override void minimize() { }
-    public override void maximize(){}
 }

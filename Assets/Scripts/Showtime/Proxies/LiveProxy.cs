@@ -2,7 +2,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
+[Serializable]
 public abstract class LiveProxy : MonoBehaviour{
 
     protected HashSet<LiveProxy> m_children;
@@ -11,6 +13,7 @@ public abstract class LiveProxy : MonoBehaviour{
     public void setLayoutDirty() { m_isLayoutDirty = true; }
     public void setLayoutClean() { m_isLayoutDirty = false; }
 
+    [SerializeField]
     private string m_id;
     public string id {
         set {m_id = value;}
@@ -50,6 +53,8 @@ public abstract class LiveProxy : MonoBehaviour{
         m_live = live;
         m_parentId = parentId;
         id = liveId;
+        var temp = new UnityEditor.SerializedObject(this);
+        Debug.Log(JsonConvert.SerializeObject(temp));
     }
 
     public virtual bool AddChild(LiveProxy proxy)
@@ -77,9 +82,7 @@ public abstract class LiveProxy : MonoBehaviour{
     public abstract void update_value(object value);
     public abstract void receive_value(object value);
 
-    public abstract void minimize();
-    public abstract void maximize();
-
+    [SerializeField]
     private bool m_isCloneable;
     public bool isCloneable { get { return m_isCloneable; } set { m_isCloneable = value; } }
     public virtual LiveProxy clone(bool canCloneCopy = false){ return null; }
