@@ -53,8 +53,6 @@ public abstract class LiveProxy : MonoBehaviour{
         m_live = live;
         m_parentId = parentId;
         id = liveId;
-        var temp = new UnityEditor.SerializedObject(this);
-        Debug.Log(JsonConvert.SerializeObject(temp));
     }
 
     public virtual bool AddChild(LiveProxy proxy)
