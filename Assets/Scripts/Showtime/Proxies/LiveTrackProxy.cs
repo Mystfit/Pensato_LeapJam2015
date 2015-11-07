@@ -6,11 +6,10 @@ using System;
 
 public class LiveTrackProxy : LiveProxy {
 
-    private Transform deviceParent;
-    private Transform clipParent;
+    public Transform deviceParent;
+    public Transform clipParent;
     private Text label;
     private LiveClipProxy m_playingClip;
-    private LiveDeviceProxy m_activeFocussedDevice;
 
     void Awake() {
         isCloneable = false;

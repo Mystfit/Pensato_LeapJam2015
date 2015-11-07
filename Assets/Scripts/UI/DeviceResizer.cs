@@ -2,21 +2,21 @@
 using UnityEngine.UI;
 using System.Collections;
 using System;
+using Utils;
 
 public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
 {
     public float maximizedWidth = 123;
     public float minimizedWidth = 25;
-
     public float minimizedHeight = 25;
-
+    public float animationSpeed = 0.1f;
     private bool m_isMinimized;
     public bool isMinimized { get { return m_isMinimized; } }
-
+    public bool startMinimized;
     void Awake()
     {
-        loadAssets();
         m_isMinimized = false;
+        if (startMinimized) minimize();
     }
 
     public void minimize()
@@ -24,52 +24,95 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
         loadAssets();
 
         m_sliders = GetComponentsInChildren<ParamSlider>();
+        m_upScrollimages = m_upScroll.GetComponentsInChildren<Image>();
+        m_downScrollImages = m_downScroll.GetComponentsInChildren<Image>();
+
         foreach (ParamSlider slider in m_sliders)
             slider.minimize();
 
-        LayoutElement[] layouts = GetComponentsInChildren<LayoutElement>();
-        foreach(LayoutElement elem in layouts)
-            elem.minWidth = minimizedWidth;
+        m_layouts = GetComponentsInChildren<LayoutElement>();
+        Color up_off_color = Color.black;
+        up_off_color.a = 0.0f;
 
-        m_layoutElem.minWidth = minimizedWidth;
-        m_rect.sizeDelta = new Vector2(minimizedWidth, m_rect.sizeDelta.y);
-        m_title.sizeDelta = new Vector2(minimizedWidth, m_title.sizeDelta.y);
-        m_parameters.sizeDelta = new Vector2(minimizedWidth, m_parameters.sizeDelta.y);
-        m_viewport.sizeDelta = new Vector2(minimizedWidth, m_viewport.sizeDelta.y);
-        m_content.sizeDelta = new Vector2(minimizedWidth, m_content.sizeDelta.y);
-        m_upScroll.gameObject.SetActive(false);
-        m_downScroll.gameObject.SetActive(false);
+
+        //GameObject up_midGraphics = m_upScroll.gameObject.FindInChildren("Button_Plane_Mid");
+        //GameObject down_midGraphics = m_downScroll.gameObject.FindInChildren("Button_Plane_Mid");
+        //LeanTween.color(up_midGraphics, up_off_color, animationSpeed).setEase(LeanTweenType.easeOutExpo);
+        //LeanTween.color(down_midGraphics, up_off_color, animationSpeed).setEase(LeanTweenType.easeOutExpo);
+        //LeanTween.alpha(m_upScroll, 0.0f, animationSpeed).setEase(LeanTweenType.easeOutExpo);
+        //LeanTween.alpha(m_downScroll, 0.0f, animationSpeed).setEase(LeanTweenType.easeOutExpo).setOnComplete(transitionComplete);
+        LeanTween.value(gameObject, updateWidth, maximizedWidth, minimizedWidth, animationSpeed).setEase(LeanTweenType.easeInOutSine);
+
+        foreach (Image img in m_upScrollimages)
+            img.CrossFadeAlpha(0.0f, animationSpeed, false);
+        foreach (Image img in m_downScrollImages)
+            img.CrossFadeAlpha(0.0f, animationSpeed, false);
 
         LayoutRebuilder.MarkLayoutForRebuild(m_rect);
         m_isMinimized = true;
+    }
+
+    private void transitionComplete()
+    {
+        m_upScroll.gameObject.SetActive(false);
+        m_downScroll.gameObject.SetActive(false);
     }
 
     public void maximize()
     {
         loadAssets();
 
-        foreach (IHidable slider in m_sliders)
-            slider.maximize();
+        if (m_sliders != null)
+        {
+            foreach (IHidable slider in m_sliders)
+                slider.maximize();
+        }
 
-        LayoutElement[] layouts = GetComponentsInChildren<LayoutElement>();
-        foreach (LayoutElement elem in layouts)
-            elem.minWidth = maximizedWidth;
-
-        m_layoutElem.minWidth = maximizedWidth;
-        m_rect.sizeDelta = new Vector2(maximizedWidth, m_rect.sizeDelta.y);
-        m_title.sizeDelta = new Vector2(maximizedWidth, m_title.sizeDelta.y);
-        m_parameters.sizeDelta = new Vector2(maximizedWidth, m_parameters.sizeDelta.y);
-        m_viewport.sizeDelta = new Vector2(maximizedWidth, m_viewport.sizeDelta.y);
-        m_content.sizeDelta = new Vector2(maximizedWidth, m_content.sizeDelta.y);
+        m_layouts = GetComponentsInChildren<LayoutElement>();
+        m_upScrollimages = m_upScroll.GetComponentsInChildren<Image>();
+        m_downScrollImages = m_downScroll.GetComponentsInChildren<Image>();
         m_upScroll.gameObject.SetActive(true);
         m_downScroll.gameObject.SetActive(true);
+
+        Color up_on_color = m_upScroll.GetComponentInChildren<MomentaryButton>().MidGraphicsOnColor;
+        Color down_on_color = m_downScroll.GetComponentInChildren<MomentaryButton>().MidGraphicsOnColor;
+
+        //GameObject up_midGraphics = m_upScroll.gameObject.FindInChildren("Button_Plane_Mid");
+        //GameObject down_midGraphics = m_downScroll.gameObject.FindInChildren("Button_Plane_Mid");
+        //LeanTween.color(up_midGraphics, up_on_color, animationSpeed).setEase(LeanTweenType.easeInOutSine);
+        //LeanTween.color(down_midGraphics, down_on_color, animationSpeed).setEase(LeanTweenType.easeInOutSine);
+        //LeanTween.alpha(m_upScroll, 1.0f, animationSpeed).setEase(LeanTweenType.easeInExpo);
+        //LeanTween.alpha(m_downScroll, 1.0f, animationSpeed).setEase(LeanTweenType.easeInExpo);
+        LeanTween.value(gameObject, updateWidth, minimizedWidth, maximizedWidth, animationSpeed).setEase(LeanTweenType.easeInOutSine);
+
+        foreach (Image img in m_upScrollimages)
+            img.CrossFadeAlpha(0.1f, animationSpeed, false);
+        foreach (Image img in m_downScrollImages)
+            img.CrossFadeAlpha(0.1f, animationSpeed, false);
 
         LayoutRebuilder.MarkLayoutForRebuild((RectTransform)transform);
         m_isMinimized = false;
     }
 
+    private void updateWidth(float value)
+    {
+        foreach (LayoutElement elem in m_layouts)
+            elem.minWidth = value;
+
+        m_layoutElem.minWidth = value;
+        m_rect.sizeDelta = new Vector2(value, m_rect.sizeDelta.y);
+        m_title.sizeDelta = new Vector2(value, m_title.sizeDelta.y);
+        m_parameters.sizeDelta = new Vector2(value, m_parameters.sizeDelta.y);
+        m_viewport.sizeDelta = new Vector2(value, m_viewport.sizeDelta.y);
+        m_content.sizeDelta = new Vector2(value, m_content.sizeDelta.y);
+    }
+
     //ASSETS
     private ParamSlider[] m_sliders;
+    private LayoutElement[] m_layouts;
+    private Image[] m_upScrollimages;
+    private Image[] m_downScrollImages;
+
     private LayoutElement m_layoutElem;
     private RectTransform m_rect;
     public RectTransform m_title;

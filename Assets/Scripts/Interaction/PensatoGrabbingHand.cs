@@ -165,6 +165,11 @@ public class PensatoGrabbingHand : MonoBehaviour
             GameObject clone = grabbable.clone();
             grabbable = clone.GetComponent<PensatoGrabbable>();
             grabbable.IsCloneable = false;
+
+            GrabbableTracker[] trackers = grabbable.GetComponentsInParent<GrabbableTracker>();
+            foreach(GrabbableTracker t in trackers)
+                t.ChildLeaving(grabbable);
+
             active_object_ = clone.GetComponent<Collider>();
         }
 
@@ -232,7 +237,7 @@ public class PensatoGrabbingHand : MonoBehaviour
         if (active_object_ != null)
         {
             // Notify the grabbable object that is was released.
-            GrabbableObject grabbable = active_object_.GetComponent<GrabbableObject>();
+            PensatoGrabbable grabbable = active_object_.GetComponent<PensatoGrabbable>();
             if (grabbable != null)
                 grabbable.OnRelease();
 
@@ -244,6 +249,10 @@ public class PensatoGrabbingHand : MonoBehaviour
                 active_closest_dockable_.OnHoverEnd(active_object_.transform);
                 active_closest_dockable_.OnDropped(active_object_.transform);
             }
+
+            GrabbableTracker[] trackers = grabbable.GetComponentsInParent<GrabbableTracker>();
+            foreach (GrabbableTracker t in trackers)
+                t.ChildArrivedAtDestination(grabbable);
 
             Leap.Utils.IgnoreCollisions(gameObject, active_object_.gameObject, false);
         }

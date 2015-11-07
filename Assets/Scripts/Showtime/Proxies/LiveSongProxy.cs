@@ -14,7 +14,7 @@ public class LiveSongProxy : LiveProxy {
 
     void Awake () {
         isCloneable = false;
-        trackParent = gameObject.FindInChildren("tracks").transform;
+        trackParent = transform.Find("tracks").transform;
         trackPickerParent = transform.GetChild(1);// gameObject.FindInChildren("track_picker").transform;
     }
 
@@ -35,6 +35,7 @@ public class LiveSongProxy : LiveProxy {
         GameObject trackBtn = GameObject.Instantiate(((LiveSongProxyController)LiveSongProxyController.instance).trackSelectPrefab);
         TrackSelectButton btn = trackBtn.GetComponent<TrackSelectButton>();
         btn.setText(track.proxyName);
+        track.deviceParent.GetComponent<RadialHologram>().origin = btn.transform;
         btn.m_track = track;
         btn.transform.SetParent(trackPickerParent, false);
     }

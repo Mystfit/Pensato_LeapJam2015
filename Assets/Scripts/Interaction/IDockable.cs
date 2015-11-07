@@ -7,5 +7,6 @@ public interface IDockable
     void OnHoverStart(Transform hoverObject);
     void OnHoverEnd(Transform hoverObject);
     void ContinueHover(Transform hoverObject);
+    void ChildLeaving(IGrabbable child);
     bool IsDockable { get; }
 }

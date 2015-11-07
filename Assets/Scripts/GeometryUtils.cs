@@ -168,6 +168,7 @@ public static class GeometryUtils {
 
     public static Vector3[] BuildArcPositions(float radius, float arcLength, int numPoints, float minAngle, float offsetAngle, bool centered, float[] sizes, FacingDirections direction)
     {
+        if (numPoints < 1) return new Vector3[0];
         float[] angles = new float[numPoints];
         float totalArcSize = 0.0f;
         float angleInc = (arcLength / numPoints < minAngle) ? minAngle : arcLength / numPoints;
@@ -182,7 +183,7 @@ public static class GeometryUtils {
         float startAngle = (centered) ? ((numPoints) * angleInc) * 0.5f : 0.0f;
         startAngle += offsetAngle;
         if (centered && sizes != null)
-            startAngle = totalArcSize * 0.5f + offsetAngle;
+            startAngle = totalArcSize * 0.5f + offsetAngle - angles[0]*0.5f;
 
         Vector3[] points = new Vector3[numPoints + 1];
 

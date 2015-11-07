@@ -25,7 +25,7 @@ public class LiveParameterProxy : LiveProxy
     public void Awake()
     {
         isCloneable = true;
-        m_label = gameObject.FindInChildren("label").GetComponent<Text>();
+        m_label = transform.Find("slider").Find("label").GetComponent<Text>();
     }
 
     public void init(LiveLink live, string liveId, string name, string liveParent, float minimum, float maximum, float startValue)

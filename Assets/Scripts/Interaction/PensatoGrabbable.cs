@@ -12,6 +12,7 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
 {
     public bool toggleCloneable;
     private LiveProxy m_proxy;
+
     void Awake()
     {
         m_proxy = GetComponent<LiveProxy>();
@@ -56,7 +57,8 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
     public Vector3 rightHandAxis;
     public Vector3 objectAxis;
 
-    public bool rotateQuickly = true;
+    private bool m_rotateQuickly = true;
+    public bool rotateQuickly{get { return m_rotateQuickly; }}
     public bool centerGrabbedObject = false;
 
     public Rigidbody breakableJoint;
@@ -139,6 +141,10 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
         throw new NotImplementedException();
     }
 
+    public void ParentDock()
+    {
+    }
+
     bool IGrabbable.IsScaling{ get { return false; } }
     bool IGrabbable.IsCloneable { get { return false; } }
 
@@ -149,4 +155,17 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
             throw new NotImplementedException();
         }
     }
+
+    //private IDockable m_parentDock;
+    //public IDockable Dock
+    //{
+    //    get {return m_parentDock;}
+    //    set {
+    //        if(m_parentDock != null){
+    //            m_parentDock
+    //            m_parentDock.ChildLeaving(this);
+    //        }
+    //        m_parentDock = value;
+    //    }
+    //}
 }

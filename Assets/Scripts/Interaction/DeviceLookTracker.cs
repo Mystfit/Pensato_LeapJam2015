@@ -3,12 +3,26 @@ using System.Collections;
 
 [ExecuteInEditMode]
 public class DeviceLookTracker : MonoBehaviour {
-    public Transform vr_eye;
     private Transform m_activeFocussedDevice = null;
+    public Transform eye;
 
-    public int overrideActiveDevice { set
-        { lookAtDevice(transform.GetChild(value)); }
+    void Awake()
+    {
+        //try
+        //{
+        //    eye = ((LiveDeviceProxyController)LiveDeviceProxyController.instance).vr_eye;
+        //}
+        //catch (System.NullReferenceException e)
+        //{
+        //    Debug.Log(e);
+        //}     
     }
+
+    public int overrideActiveDevice { set { lookAtDevice(transform.GetChild(value));
+            //iTween[] allTweens = GetComponentsInChildren<iTween>();
+            //foreach (iTween t in allTweens)
+            //    DestroyImmediate(t);
+        } }
 
     void Update()
     {
@@ -22,12 +36,14 @@ public class DeviceLookTracker : MonoBehaviour {
             if (m_activeFocussedDevice != null)
                 m_activeFocussedDevice.GetComponent<DeviceResizer>().minimize();
             m_activeFocussedDevice = target;
-            m_activeFocussedDevice.GetComponent<DeviceResizer>().maximize();
+            if(m_activeFocussedDevice != null)
+                m_activeFocussedDevice.GetComponent<DeviceResizer>().maximize();
         }
     }
 
     public RectTransform focusedLookDevice()
     {
+        
         if (transform.childCount == 1)
             return (RectTransform)transform.GetChild(0);
 
@@ -42,7 +58,7 @@ public class DeviceLookTracker : MonoBehaviour {
                 Vector3[] corners = new Vector3[4];
                 device.GetWorldCorners(corners);
                 Vector3 offset = device.position - Vector3.Lerp(corners[0], corners[2], 0.5f);
-                float angle = Vector3.Angle(vr_eye.forward, (device.position - offset) - vr_eye.position);
+                float angle = Vector3.Angle(eye.forward, (device.position - offset) - eye.position);
 
                 if (smallestAngle < 0.0f)
                     smallestAngle = angle;

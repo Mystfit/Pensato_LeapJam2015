@@ -4,11 +4,14 @@ using System.Collections;
 public class LiveSongProxyController : LiveProxyController<LiveSongProxy>
 {
     public GameObject trackSelectPrefab;
+    public Transform library;
+
     public LiveSongProxy createSong(LiveLink live, string id, string name, string parent)
     {
         Debug.Log("Building song: " + id.ToString());
         LiveSongProxy song = createProxyUI(id.ToString());
         song.init(live, id, name, parent);
+        song.transform.SetParent(library, false);
         return song;
     }
 

@@ -74,6 +74,7 @@ public class UnityNode : MonoBehaviour
     public virtual void Close()
     {
         bool result = m_node.close();
+        //Environment.Exit(Environment.ExitCode);
         Debug.Log("Network cleanup: " + result);
     }
 }

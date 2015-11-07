@@ -3,9 +3,7 @@ using System.Collections;
 using System.Linq;
 
 public class LiveDeviceProxyController : LiveProxyController<LiveDeviceProxy>
-{
-    public Transform vr_eye;
-  
+{  
     public LiveDeviceProxy createDevice(LiveLink live, string id, string name, string parent)
     {
         Debug.Log("Building device: " + id.ToString());

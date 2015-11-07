@@ -1,0 +1,127 @@
+fileFormatVersion: 2
+guid: 34e17c959f3f01548b5e0ed4ac198b8e
+timeCreated: 1446900997
+licenseType: Free
+ModelImporter:
+  serializedVersion: 18
+  fileIDToRecycleName:
+    100000: curve2
+    100002: extrudedSurface1
+    100004: extrudedSurface2
+    100006: extrudedSurface3
+    100008: extrudedSurface4
+    100010: extrudedSurface5
+    100012: extrudedSurface6
+    100014: extrudedSurface7
+    100016: extrudedSurface8
+    100018: extrudedSurface9
+    100020: nurbsCircle1
+    100022: pCylinder1
+    100024: //RootNode
+    100026: pPipe1
+    100028: transform1
+    100030: transform2
+    100032: transform3
+    100034: transform4
+    100036: transform5
+    100038: transform6
+    100040: transform7
+    100042: transform8
+    100044: transform9
+    400000: curve2
+    400002: extrudedSurface1
+    400004: extrudedSurface2
+    400006: extrudedSurface3
+    400008: extrudedSurface4
+    400010: extrudedSurface5
+    400012: extrudedSurface6
+    400014: extrudedSurface7
+    400016: extrudedSurface8
+    400018: extrudedSurface9
+    400020: nurbsCircle1
+    400022: pCylinder1
+    400024: //RootNode
+    400026: pPipe1
+    400028: transform1
+    400030: transform2
+    400032: transform3
+    400034: transform4
+    400036: transform5
+    400038: transform6
+    400040: transform7
+    400042: transform8
+    400044: transform9
+    2300000: curve2
+    2300002: pCylinder1
+    2300004: pPipe1
+    3300000: curve2
+    3300002: pCylinder1
+    3300004: pPipe1
+    4300000: pPipe1
+    4300002: curve2
+    4300004: pCylinder1
+    9500000: //RootNode
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    optimizeGameObjects: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: .5
+    animationPositionError: .5
+    animationScaleError: .5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    splitTangentsAcrossUV: 1
+    normalImportMode: 0
+    tangentImportMode: 1
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    human: []
+    skeleton: []
+    armTwist: .5
+    foreArmTwist: .5
+    upperLegTwist: .5
+    legTwist: .5
+    armStretch: .0500000007
+    legStretch: .0500000007
+    feetSpacing: 0
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

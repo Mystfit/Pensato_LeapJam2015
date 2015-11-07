@@ -14,8 +14,8 @@ public class LiveDeviceProxy : LiveProxy
     void Awake()
     {
         isCloneable = false;
-        parameterParent = gameObject.FindInChildren("content").transform;
-        label = gameObject.FindInChildren("device_label").GetComponent<Text>();
+        parameterParent = transform.Find("parameters").Find("viewport").Find("content");
+        label = transform.Find("title_panel").GetChild(0).GetComponent<Text>();
     }
 
     public override void init(LiveLink live, string id, string name, string parent)

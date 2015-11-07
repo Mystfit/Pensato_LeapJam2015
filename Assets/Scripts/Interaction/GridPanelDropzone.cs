@@ -75,6 +75,9 @@ public class GridPanelDropzone : MonoBehaviour, IDockable
         int[] offset = m_snapGrid.CalculateOverlapOffset(cell, coordinates[0], coordinates[1]);
         cell.x = coordinates[0] + offset[0];
         cell.y = coordinates[1] + offset[1];
+    }
 
+    public void ChildLeaving(IGrabbable child)
+    {
     }
 }

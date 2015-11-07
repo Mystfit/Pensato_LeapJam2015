@@ -90,7 +90,7 @@ public class RadialLayout : LayoutGroup
         SetLayoutInputForAxis(totalMin, totalPreferred, totalFlexible, axis);
     }
 
-    private void PlaceRadial()
+    public Vector3[] CalculateRadialPoints()
     {
         float[] widths = null;
         if (fitWidth)
@@ -106,7 +106,12 @@ public class RadialLayout : LayoutGroup
             }
         }
 
-        Vector3[] points = GeometryUtils.BuildArcPositions(radius, arcSize, transform.childCount, spacing, startOffset, centered, widths, facingDirection);
+       return GeometryUtils.BuildArcPositions(radius, arcSize, transform.childCount, spacing, startOffset, centered, widths, facingDirection);
+    }
+
+    private void PlaceRadial()
+    {
+        Vector3[] points = CalculateRadialPoints();
         for (int i = 0; i < points.Length; i++)
         {
             points[i].z = points[i].y;
@@ -115,13 +120,25 @@ public class RadialLayout : LayoutGroup
 
         for (int i = 0; i < rectChildren.Count; i++)
         {
+            Quaternion rotation = Quaternion.identity;
+            if(childAlignment == TextAnchor.UpperCenter ||
+                childAlignment == TextAnchor.MiddleCenter ||
+                childAlignment == TextAnchor.LowerCenter)
+            {
+                rotation = Quaternion.LookRotation(points[i] - transform.position);
+            }
+            else
+            {
+                rotation = Quaternion.LookRotation(Vector3.Lerp(points[i], points[i + 1], 0.5f) - transform.position);
+            }
             RectTransform child = rectChildren[i];
             child.localPosition = points[i];
-
-            if (facingDirection == GeometryUtils.FacingDirections.INWARDS)
-                child.rotation = Quaternion.LookRotation(Vector3.Lerp(points[i], points[i + 1], 0.5f) - transform.position);
-            else
-                child.rotation = Quaternion.LookRotation(Vector3.Lerp(points[i+1], points[i], 0.5f) - transform.position);
+            Debug.DrawLine(points[i], points[i] + new Vector3(0.0f, 1.0f, 0.0f));
+            child.rotation = rotation;
+            //if (facingDirection == GeometryUtils.FacingDirections.INWARDS)
+            //    child.rotation = Quaternion.LookRotation(Vector3.Lerp(points[i], points[i + 1], 0.0f) - transform.position);
+            //else
+            //    child.rotation = Quaternion.LookRotation(Vector3.Lerp(points[i+1], points[i], 0.5f) - transform.position);
             child.Rotate(new Vector3(tilt, 0.0f, 0.0f));
         }
     }

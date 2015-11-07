@@ -10,6 +10,7 @@ public interface IGrabbable
     bool IsGrabbed {get; }
     bool IsCloneable { get; }
     bool IsHovered { get; }
+    bool rotateQuickly { get; }
 
     void OnStartScale();
     void ContinueScale(Vector3 scalerA, Vector3 scalerB);

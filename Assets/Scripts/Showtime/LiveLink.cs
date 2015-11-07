@@ -16,8 +16,6 @@ public class LiveLink : UnityNode {
     protected LiveParameterProxyController m_parameterController;
     protected LiveClipProxyController m_clipController;
 
-    public Transform uiCenter;
-
     private Dictionary<string, LiveProxy> m_liveProxies;
     private Queue<LiveProxy> m_freshProxies;
     private ConcurrentQueue<Func<LiveProxy>> m_queuedProxyCreations;
