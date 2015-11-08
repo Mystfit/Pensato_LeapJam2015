@@ -8,14 +8,6 @@ public class DeviceLookTracker : MonoBehaviour {
 
     void Awake()
     {
-        //try
-        //{
-        //    eye = ((LiveDeviceProxyController)LiveDeviceProxyController.instance).vr_eye;
-        //}
-        //catch (System.NullReferenceException e)
-        //{
-        //    Debug.Log(e);
-        //}     
     }
 
     public int overrideActiveDevice { set { lookAtDevice(transform.GetChild(value));
@@ -43,7 +35,6 @@ public class DeviceLookTracker : MonoBehaviour {
 
     public RectTransform focusedLookDevice()
     {
-        
         if (transform.childCount == 1)
             return (RectTransform)transform.GetChild(0);
 

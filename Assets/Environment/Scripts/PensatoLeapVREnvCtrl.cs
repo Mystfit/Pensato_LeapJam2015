@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -29,7 +30,7 @@ public class PensatoLeapVREnvCtrl : MonoBehaviour {
         PensatoLeapVREnvCtrl.mainControl = this;
         PensatoLeapVREnvCtrl.currentColor = PensatoLeapVREnvCtrl.colorChoices[0];
 
-        liveSongCtrl = GameObject.Find("showtime_live").GetComponent<LiveSongProxyController>();
+        liveSongCtrl = (LiveSongProxyController)LiveSongProxyController.instance;
 
         addEnvironment(40, 0.025f);
     }
@@ -38,7 +39,7 @@ public class PensatoLeapVREnvCtrl : MonoBehaviour {
 	void Update () {
         ready = (liveSongCtrl.trackData.Length > 0);
 
-        if(ready)
+        if (ready)
         {
             audioAmplAvg = 0;
             for (int i = 0; i < liveSongCtrl.trackData.Length; i++)
@@ -59,7 +60,7 @@ public class PensatoLeapVREnvCtrl : MonoBehaviour {
     public void addEnvironment(int size, float padding)
     {
         GameObject o = new GameObject("PensatoEnv_"+ environments.Count.ToString() );
-        o.transform.parent = this.transform;
+        o.transform.SetParent(transform, false);
 
         PensatoEnvironment oEnvScript = o.AddComponent<PensatoEnvironment>();
         oEnvScript.initEnv(tileAsset, size, padding);

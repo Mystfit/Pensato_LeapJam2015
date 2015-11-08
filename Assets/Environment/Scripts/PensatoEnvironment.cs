@@ -8,7 +8,7 @@ public class PensatoEnvironment : MonoBehaviour {
     private float dataUpdate = 0.0f;
     private bool updatedable = false;
 
-    public int envSize = 10;
+    public int envSize = 50;
     public float envPadding = 0.025f;
 
     private int samples = 128;

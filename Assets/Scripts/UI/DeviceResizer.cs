@@ -27,8 +27,8 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
         m_upScrollimages = m_upScroll.GetComponentsInChildren<Image>();
         m_downScrollImages = m_downScroll.GetComponentsInChildren<Image>();
 
-        foreach (ParamSlider slider in m_sliders)
-            slider.minimize();
+        //foreach (ParamSlider slider in m_sliders)
+        //    slider.minimize();
 
         m_layouts = GetComponentsInChildren<LayoutElement>();
         Color up_off_color = Color.black;
@@ -62,11 +62,9 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
     {
         loadAssets();
 
-        if (m_sliders != null)
-        {
-            foreach (IHidable slider in m_sliders)
-                slider.maximize();
-        }
+        m_sliders = GetComponentsInChildren<ParamSlider>();
+        //foreach (IHidable slider in m_sliders)
+        //    slider.maximize();
 
         m_layouts = GetComponentsInChildren<LayoutElement>();
         m_upScrollimages = m_upScroll.GetComponentsInChildren<Image>();

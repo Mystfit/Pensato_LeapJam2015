@@ -1,10 +1,13 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 
 public class LiveSongProxyController : LiveProxyController<LiveSongProxy>
 {
     public GameObject trackSelectPrefab;
     public Transform library;
+    private float[] m_trackData = new float[0];
+    public float[] trackData { get { return m_trackData; } }
 
     public LiveSongProxy createSong(LiveLink live, string id, string name, string parent)
     {
@@ -23,6 +26,7 @@ public class LiveSongProxyController : LiveProxyController<LiveSongProxy>
     private object song_meters(ZST.ZstMethod methodData)
     {
         LiveMessage msg = LiveLink.parseLiveMessage(methodData.output.ToString(), LiveLink.LiveMessageType.ARRAY);
+        m_trackData = Array.ConvertAll(msg.array, element => float.Parse(element.ToString()));
         return null;
     }
 }

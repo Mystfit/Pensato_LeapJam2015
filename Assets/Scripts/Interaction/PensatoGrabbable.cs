@@ -27,7 +27,7 @@ public class PensatoGrabbable : MonoBehaviour, IGrabbable
     public bool IsCloneable { get { return cloneable_; } set { cloneable_ = value; } }
 
 
-    public GameObject clone()
+    public virtual GameObject clone()
     {
         if (!IsCloneable) return null;
         GameObject clone = null;

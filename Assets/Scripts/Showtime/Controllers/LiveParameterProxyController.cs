@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 public class LiveParameterProxyController : LiveProxyController<LiveParameterProxy>
 {
+    public GameObject dragPrefab;
 
     public LiveParameterProxy createParameter(LiveLink live, string id, string name, string parent, float min, float max, float startValue=0.0f)
     {
         Debug.Log("Building parameter: " + id.ToString());
         LiveParameterProxy parameter = createProxyUI(id.ToString());
         parameter.init(live, id, name, parent, min, max, startValue);
-        parameter.GetComponent<PensatoGrabbable>().IsCloneable = parameter.isCloneable;
         return parameter;
     }
 
