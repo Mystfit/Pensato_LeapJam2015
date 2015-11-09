@@ -10,6 +10,9 @@ public class LiveTrackProxy : LiveProxy {
     public Transform clipParent;
     private Text label;
     private LiveClipProxy m_playingClip;
+    private UnityEngine.Color m_color;
+
+    public PatchCable amplitudeJack;
 
     void Awake() {
         isCloneable = false;
@@ -18,10 +21,19 @@ public class LiveTrackProxy : LiveProxy {
         clipParent = gameObject.FindInChildren("clips").transform;
     }
 
-    public override void init(LiveLink live, string id, string name, string parent)
+    public void init(LiveLink live, string id, string name, string parent, UnityEngine.Color color)
     {
         label.text = name;
+        m_color = color;
+        amplitudeJack = new PatchCable(PatchCable.PlugType.JACK);
         base.init(live, id, name, parent);
+    }
+
+    public override void Destroy()
+    {
+        foreach(PatchCable plug in amplitudeJack.connections)
+            plug.Disconnect(amplitudeJack);
+        base.Destroy();
     }
 
     public override bool AddChild(LiveProxy proxy)

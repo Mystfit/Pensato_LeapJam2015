@@ -14,7 +14,7 @@ public abstract class LiveProxyController<T> : MonoBehaviour where T : Component
 
     public static LiveProxyController<T> instance { get { return LiveProxyController<T>.c_instance; } }
 
-    void Awake()
+    protected virtual void Awake()
     {
         c_instance = this;
         m_queuedActions = new ConcurrentQueue<Action>();
@@ -42,9 +42,12 @@ public abstract class LiveProxyController<T> : MonoBehaviour where T : Component
 
     public void Update()
     {
-        while (m_queuedActions.Count > 0)
+        if(m_queuedActions != null)
         {
-            m_queuedActions.Dequeue()();
+            while (m_queuedActions.Count > 0)
+            {
+                m_queuedActions.Dequeue()();
+            }
         }
     }
 

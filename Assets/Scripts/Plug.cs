@@ -2,20 +2,67 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Plug : MonoBehaviour {
+public class PatchCable {
 
-    public enum PlugDirection { INPUT = 0, OUTPUT};
-    public PlugDirection direction;
+    public enum PlugType { PLUG = 0, JACK};
+    public PlugType plugType;
+
+    public PatchCable(PlugType plugType)
+    {
+        this.plugType = plugType;
+        m_destinationPlugs = new HashSet<PatchCable>();
+        m_incomingJacks = new HashSet<PatchCable>();
+        m_incomingJackValues = new Dictionary<PatchCable, float[]>();
+    }
 
     //JACKS
     //----------------
-    private HashSet<Plug> m_destinationPlugs;
-    public void RegisterDestinationPlug(Plug plug){ m_destinationPlugs.Add(plug); }
-    public void RemoveDestinationPlug(Plug plug) { m_destinationPlugs.Remove(plug); }
+    private HashSet<PatchCable> m_destinationPlugs;
+    public HashSet<PatchCable> connections
+    {
+        get
+        {
+            if(plugType == PlugType.JACK)
+                return m_destinationPlugs;
+            else if (plugType == PlugType.PLUG)
+               return m_incomingJacks;
+            return null;
+        }
+    }
+    public int connectionCount {
+        get {
+            if (plugType == PlugType.JACK)
+            {
+                return m_destinationPlugs.Count;
+            } else if (plugType == PlugType.PLUG)
+            {
+                return m_incomingJacks.Count;
+            }
+            return 0;
+        }
+    }
+    public bool Connect(PatchCable plug){
+        if (plugType == PlugType.JACK)
+        {
+            if(m_destinationPlugs.Add(plug))
+                return plug.Connect(this);
+        } 
+        else if (plugType == PlugType.PLUG)
+            if(m_incomingJacks.Add(plug))
+                return plug.Connect(this);
+        return false;
+    }
+
+    public void Disconnect(PatchCable plug) {
+        if (plugType == PlugType.JACK)
+            m_destinationPlugs.Remove(plug);
+        else if (plugType == PlugType.PLUG)
+            m_incomingJacks.Remove(plug);
+    }
     public void UpdateJack(float value) { UpdateJack(new float[] { value }); }
     public void UpdateJack(float[] values)
     {
-        foreach(Plug plug in m_destinationPlugs)
+        foreach(PatchCable plug in m_destinationPlugs)
         {
             plug.Send(this, values);
         }
@@ -24,20 +71,19 @@ public class Plug : MonoBehaviour {
 
     //PLUGS
     //------------------------
-    private Dictionary<Plug, float[]> m_incomingJackValues;
-    private HashSet<Plug> m_incomingJacks;
-    public void Send(Plug jack, float[] values)
+    private Dictionary<PatchCable, float[]> m_incomingJackValues;
+    public Dictionary<PatchCable, float[]> values {get{ return m_incomingJackValues; } }
+    public float[] jackValue(PatchCable jack) {
+        if (values.ContainsKey(jack))
+            return values[jack];
+        return null;
+    }
+
+    private HashSet<PatchCable> m_incomingJacks;
+    public void Send(PatchCable jack, float[] values)
     {
         m_incomingJackValues[jack] = values;
         SetDirty();
-    }
-
-
-    void Awake()
-    {
-        m_incomingJacks = new HashSet<Plug>();
-        m_destinationPlugs = new HashSet<Plug>();
-        m_incomingJackValues = new Dictionary<Plug, float[]>();
     }
 
     private bool m_isDirty;

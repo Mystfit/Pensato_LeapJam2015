@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ThreadingCollections;
 using System;
 using ZST;
+using Utils;
 using NetMQ;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -20,7 +21,7 @@ public class LiveLink : UnityNode {
     private Queue<LiveProxy> m_freshProxies;
     private ConcurrentQueue<Func<LiveProxy>> m_queuedProxyCreations;
     private ConcurrentQueue<Action> m_queuedProxyRemovals;
-
+    public Action proxyCreationComplete;
 
     // Use this for initialization
     void Start () {
@@ -56,6 +57,7 @@ public class LiveLink : UnityNode {
 
         try
         {
+            //Initial live wrapper layout
             string layoutJson = node.updateRemoteMethod(peer.methods["song_layout"]).output.ToString();
             createLiveProxies(deserializeLayout(layoutJson));
         }
@@ -118,7 +120,9 @@ public class LiveLink : UnityNode {
                         string t_id = id;
                         string t_name = name;
                         string t_parentId = parentId;
-                        m_queuedProxyCreations.Enqueue(() => m_trackController.createTrack(this, t_id, t_name, t_parentId));
+                        UnityEngine.Color t_color = Utils.ColorTools.intToColor(int.Parse(liveObjParams["color"].ToString()));
+
+                        m_queuedProxyCreations.Enqueue(() => m_trackController.createTrack(this, t_id, t_name, t_parentId, t_color));
                         break;
                     case "PyroSong":
                         Debug.Log("Enqueing Song: " + id);
@@ -137,7 +141,6 @@ public class LiveLink : UnityNode {
                     m_queuedProxyRemovals.Enqueue(() => m_liveProxies[proxy_id].Destroy());
                     break;
                 }
-                    
             }
         }
     }
@@ -161,6 +164,8 @@ public class LiveLink : UnityNode {
             LiveProxy freshProxy = m_queuedProxyCreations.Dequeue().Invoke();
             m_freshProxies.Enqueue(freshProxy);
             m_liveProxies[freshProxy.id] = freshProxy;
+            if (m_queuedProxyCreations.Count == 0)
+                proxyCreationComplete();
         }
 
         List<LiveProxy> orphanProxies = null;

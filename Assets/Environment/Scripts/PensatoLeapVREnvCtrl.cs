@@ -21,38 +21,58 @@ public class PensatoLeapVREnvCtrl : MonoBehaviour {
 
     public GameObject tileAsset;
     public List<GameObject> environments = new List<GameObject>();
+    public PatchCable trackAmplitudePlug = new PatchCable(PatchCable.PlugType.PLUG);
+    public LiveLink liveLink;
 
     public float audioAmplAvg = 0;
     public float lastAmplAvg = -1;
 
-    // Use this for initialization
     void Start () {
         PensatoLeapVREnvCtrl.mainControl = this;
         PensatoLeapVREnvCtrl.currentColor = PensatoLeapVREnvCtrl.colorChoices[0];
 
         liveSongCtrl = (LiveSongProxyController)LiveSongProxyController.instance;
-
         addEnvironment(40, 0.025f);
+
+        liveLink.proxyCreationComplete += connectPlugs;
+    }
+
+    public void connectPlugs()
+    {
+        LiveTrackProxyController trackControl = (LiveTrackProxyController)LiveTrackProxyController.instance;
+        foreach (LiveTrackProxy track in trackControl.proxies.Values)
+            track.amplitudeJack.Connect(trackAmplitudePlug);
     }
 	
-	// Update is called once per frame
-	void Update () {
-        ready = (liveSongCtrl.trackData.Length > 0);
-
-        if (ready)
+	void Update ()
+    {
+        audioAmplAvg = 0;
+        int total = 0;
+        if (trackAmplitudePlug != null)
         {
-            audioAmplAvg = 0;
-            for (int i = 0; i < liveSongCtrl.trackData.Length; i++)
-            {
-                audioAmplAvg += liveSongCtrl.trackData[i];
+            if (trackAmplitudePlug.IsDirty) {
+                foreach (PatchCable incoming in trackAmplitudePlug.connections)
+                {
+                    float[] jackValue = trackAmplitudePlug.jackValue(incoming);
+                    if (jackValue != null)
+                    {
+                        for (int i = 0; i < jackValue.Length; i++)
+                        {
+                            audioAmplAvg += jackValue[i];
+                            total++;
+                        }
+                    }
+                }
             }
-            audioAmplAvg /= liveSongCtrl.trackData.Length;
-
-            if (lastAmplAvg != audioAmplAvg)
+            if (trackAmplitudePlug.connections.Count > 0)
             {
-                audioAmplAvg = (audioAmplAvg + lastAmplAvg) / 2;
-                updateAudioDataToEnv(environments[0].GetComponent<PensatoEnvironment>(), audioAmplAvg);
-                lastAmplAvg = audioAmplAvg;
+                audioAmplAvg /= total;
+                if (lastAmplAvg != audioAmplAvg)
+                {
+                    audioAmplAvg = (audioAmplAvg + lastAmplAvg) / 2;
+                    updateAudioDataToEnv(environments[0].GetComponent<PensatoEnvironment>(), audioAmplAvg);
+                    lastAmplAvg = audioAmplAvg;
+                }
             }
         }
     }
