@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
 
 [CustomEditor(typeof(DeviceLookTracker))]
@@ -18,3 +19,5 @@ public class DeviceLookTrackerEditor : Editor
         }
     }
 }
+
+#endif

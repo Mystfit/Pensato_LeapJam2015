@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
 using UnityEngine.UI;
 using System.Collections;
@@ -20,3 +21,4 @@ public class DeviceResizerEditor : Editor
         }
     }
 }
+#endif
