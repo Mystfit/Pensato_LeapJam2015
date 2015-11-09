@@ -248,6 +248,9 @@ public class PensatoGrabbingHand : MonoBehaviour
             {
                 active_closest_dockable_.OnHoverEnd(active_object_.transform);
                 active_closest_dockable_.OnDropped(active_object_.transform);
+            } else
+            {
+                Destroy(grabbable.gameObject);
             }
 
             GrabbableTracker[] trackers = grabbable.GetComponentsInParent<GrabbableTracker>();

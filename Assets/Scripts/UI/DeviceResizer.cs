@@ -4,6 +4,7 @@ using System.Collections;
 using System;
 using Utils;
 
+[ExecuteInEditMode]
 public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
 {
     public float maximizedWidth = 123;

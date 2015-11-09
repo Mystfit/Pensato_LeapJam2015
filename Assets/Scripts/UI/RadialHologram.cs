@@ -42,8 +42,8 @@ public class RadialHologram : UIBehaviour, IFindsAssets {
             uvs[i] = new Vector2(0.99f, (float)i / (float)radialVerts.Length);
         }
         uvs[uvs.Length - 1] = new Vector2(0.01f, 0.5f);
-        verts[verts.Length - 2].y = transform.InverseTransformPoint(transform.GetChild(transform.childCount - 1).position).y;
-
+        verts[verts.Length - 2].y = transform.InverseTransformPoint(transform.GetChild(transform.childCount - 1).position).y - m_rect.sizeDelta.y;
+        verts[verts.Length - 1].y = transform.InverseTransformPoint(transform.GetChild(transform.childCount - 1).position).y - m_rect.sizeDelta.y;
         for (int i = 0; i < transform.childCount; i++)
         {
             Vector3[] corners = new Vector3[4];

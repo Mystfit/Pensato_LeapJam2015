@@ -2,17 +2,20 @@
 using System.Collections;
 
 public class ScalableSlider : PensatoGrabbable {
-    private GameObject m_dragGraphics;
+    public GameObject m_dragGraphics;
 
     void Awake()
     {
-        m_dragGraphics = ((LiveParameterProxyController)LiveParameterProxyController.instance).dragPrefab;
+        if((LiveParameterProxyController)LiveParameterProxyController.instance != null)
+            m_dragGraphics = ((LiveParameterProxyController)LiveParameterProxyController.instance).dragPrefab;
+
         scalable_ = true;
         IsCloneable = true;
     }
 
     public override  GameObject clone()
     {
+        if (m_dragGraphics == null) return null;
         GameObject clone = GameObject.Instantiate(m_dragGraphics);
         return clone;
     }
