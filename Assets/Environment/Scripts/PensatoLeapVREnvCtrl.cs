@@ -67,9 +67,13 @@ public class PensatoLeapVREnvCtrl : MonoBehaviour {
             if (trackAmplitudePlug.connections.Count > 0)
             {
                 audioAmplAvg /= total;
+                if (float.IsNaN(lastAmplAvg))
+                    lastAmplAvg = 0.0f;
                 if (lastAmplAvg != audioAmplAvg)
                 {
                     audioAmplAvg = (audioAmplAvg + lastAmplAvg) / 2;
+                    if (float.IsNaN(audioAmplAvg))
+                        audioAmplAvg = 0.0f;
                     updateAudioDataToEnv(environments[0].GetComponent<PensatoEnvironment>(), audioAmplAvg);
                     lastAmplAvg = audioAmplAvg;
                 }

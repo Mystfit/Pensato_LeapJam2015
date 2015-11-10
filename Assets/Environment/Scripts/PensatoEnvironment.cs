@@ -62,10 +62,10 @@ public class PensatoEnvironment : MonoBehaviour {
                 p.z = yOff * (row - half) * 3;
 
                 GameObject t = (GameObject)Instantiate(asset, p, Quaternion.Euler(90, 0, 0));
-                t.transform.parent = gameObject.transform;
+                t.transform.SetParent(gameObject.transform, false);
 
                 Hextile script = t.GetComponent<Hextile>();
-                script.idx = (int)Mathf.Abs((Vector3.Distance(t.transform.position, transform.position) / (maxDist * 1.1f)) * samples);
+                script.idx = (int)Mathf.Abs((Vector3.Distance(t.transform.localPosition, transform.localPosition) / (maxDist * 1.1f)) * samples);
                 script.setAudioData(audioData);
                 assets.Add(t);
             }

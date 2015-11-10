@@ -35,7 +35,10 @@ public class Hextile : MonoBehaviour
         //    targetColorLerp += Random.Range(-audioData[idx] * 0.5f, audioData[idx] * 0.5f);
         //}
 
-        targetColorLerp = audioData[idx] * dataScale - 0.1f;
+        float amp = 0.0f;
+        if (audioData.Count > 0)
+            amp = audioData[idx];
+        targetColorLerp = amp * dataScale - 0.1f;
 
         targetCol = Color.Lerp(Color.black, PensatoLeapVREnvCtrl.currentColor, targetColorLerp);
         currentCol = Color.Lerp(currentCol, targetCol, 0.4f);
