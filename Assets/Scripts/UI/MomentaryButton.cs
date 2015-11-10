@@ -9,6 +9,7 @@ public class MomentaryButton : MomentaryButtonBase
     public ButtonDemoGraphics offGraphics;
     public ButtonDemoGraphics midGraphics;
     public ButtonDemoGraphics botGraphics;
+    public bool applyColor;
 
     public Color MidGraphicsOnColor = new Color(0.0f, 0.5f, 0.5f, 1.0f);
     public Color BotGraphicsOnColor = new Color(0.0f, 1.0f, 1.0f, 1.0f);
@@ -31,16 +32,21 @@ public class MomentaryButton : MomentaryButtonBase
     {
         onGraphics.SetActive(true);
         offGraphics.SetActive(false);
-        midGraphics.SetColor(MidGraphicsOnColor);
-        botGraphics.SetColor(BotGraphicsOnColor);
+        if(applyColor){
+            midGraphics.SetColor(MidGraphicsOnColor);
+            botGraphics.SetColor(BotGraphicsOnColor);
+        }
     }
 
     private void TurnsOffGraphics()
     {
         onGraphics.SetActive(false);
         offGraphics.SetActive(true);
-        midGraphics.SetColor(MidGraphicsOffColor);
-        botGraphics.SetColor(BotGraphicsOffColor);
+        if (applyColor)
+        {
+            midGraphics.SetColor(MidGraphicsOffColor);
+            botGraphics.SetColor(BotGraphicsOffColor);
+        }
     }
 
     private void UpdateGraphics()

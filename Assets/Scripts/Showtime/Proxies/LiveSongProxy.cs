@@ -36,7 +36,7 @@ public class LiveSongProxy : LiveProxy {
         CrystalSelectDatabinder btn = trackBtn.GetComponent<CrystalSelectDatabinder>();
         btn.setText(track.proxyName);
         btn.init(track, trackBtn.GetComponentInChildren<ButtonDemoToggle>());
-        track.deviceParent.GetComponent<RadialHologram>().origin = btn.transform;
+        //track.clipParent.GetComponent<RadialHologram>().origin = btn.transform;
         btn.track = track;
         btn.transform.SetParent(trackPickerParent, false);
     }

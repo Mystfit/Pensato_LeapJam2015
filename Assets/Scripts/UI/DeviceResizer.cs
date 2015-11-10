@@ -12,12 +12,16 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
     public float minimizedHeight = 25;
     public float animationSpeed = 0.1f;
     private bool m_isMinimized;
+    private Collider[] m_colliders;
     public bool isMinimized { get { return m_isMinimized; } }
     public bool startMinimized;
     void Awake()
     {
         m_isMinimized = false;
-        if (startMinimized) minimize();
+        if (startMinimized)
+            minimize();
+        else
+            maximize();
     }
 
     public void minimize()
@@ -28,8 +32,8 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
         m_upScrollimages = m_upScroll.GetComponentsInChildren<Image>();
         m_downScrollImages = m_downScroll.GetComponentsInChildren<Image>();
 
-        //foreach (ParamSlider slider in m_sliders)
-        //    slider.minimize();
+        foreach (IHidable slider in m_sliders)
+            slider.minimize();
 
         m_layouts = GetComponentsInChildren<LayoutElement>();
         Color up_off_color = Color.black;
@@ -42,19 +46,28 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
         //LeanTween.color(down_midGraphics, up_off_color, animationSpeed).setEase(LeanTweenType.easeOutExpo);
         //LeanTween.alpha(m_upScroll, 0.0f, animationSpeed).setEase(LeanTweenType.easeOutExpo);
         //LeanTween.alpha(m_downScroll, 0.0f, animationSpeed).setEase(LeanTweenType.easeOutExpo).setOnComplete(transitionComplete);
-        LeanTween.value(gameObject, updateWidth, maximizedWidth, minimizedWidth, animationSpeed).setEase(LeanTweenType.easeInOutSine);
+        //updateWidth(minimizedWidth);
+        m_colliders = GetComponentsInChildren<Collider>();
+        for (int i = 0; i < m_colliders.Length; i++)
+            m_colliders[i].enabled = false;
+        LeanTween.value(gameObject, updateWidth, maximizedWidth, minimizedWidth, animationSpeed).setEase(LeanTweenType.easeInOutSine).setOnComplete(transitionComplete);
 
         foreach (Image img in m_upScrollimages)
             img.CrossFadeAlpha(0.0f, animationSpeed, false);
         foreach (Image img in m_downScrollImages)
             img.CrossFadeAlpha(0.0f, animationSpeed, false);
 
-        LayoutRebuilder.MarkLayoutForRebuild(m_rect);
+        //LayoutRebuilder.MarkLayoutForRebuild(m_rect);
         m_isMinimized = true;
     }
 
     private void transitionComplete()
     {
+        if (m_colliders != null)
+        {
+            for (int i = 0; i < m_colliders.Length; i++)
+                m_colliders[i].enabled = true;
+        }
         m_upScroll.gameObject.SetActive(false);
         m_downScroll.gameObject.SetActive(false);
     }
@@ -64,8 +77,8 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
         loadAssets();
 
         m_sliders = GetComponentsInChildren<ParamSlider>();
-        //foreach (IHidable slider in m_sliders)
-        //    slider.maximize();
+        foreach (IHidable slider in m_sliders)
+            slider.maximize();
 
         m_layouts = GetComponentsInChildren<LayoutElement>();
         m_upScrollimages = m_upScroll.GetComponentsInChildren<Image>();
@@ -82,6 +95,7 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
         //LeanTween.color(down_midGraphics, down_on_color, animationSpeed).setEase(LeanTweenType.easeInOutSine);
         //LeanTween.alpha(m_upScroll, 1.0f, animationSpeed).setEase(LeanTweenType.easeInExpo);
         //LeanTween.alpha(m_downScroll, 1.0f, animationSpeed).setEase(LeanTweenType.easeInExpo);
+        //updateWidth(maximizedWidth);
         LeanTween.value(gameObject, updateWidth, minimizedWidth, maximizedWidth, animationSpeed).setEase(LeanTweenType.easeInOutSine);
 
         foreach (Image img in m_upScrollimages)
@@ -89,14 +103,18 @@ public class DeviceResizer : MonoBehaviour, IHidable, IFindsAssets
         foreach (Image img in m_downScrollImages)
             img.CrossFadeAlpha(0.1f, animationSpeed, false);
 
-        LayoutRebuilder.MarkLayoutForRebuild((RectTransform)transform);
+        //LayoutRebuilder.MarkLayoutForRebuild((RectTransform)transform);
         m_isMinimized = false;
     }
 
     private void updateWidth(float value)
     {
-        foreach (LayoutElement elem in m_layouts)
-            elem.minWidth = value;
+        //foreach (LayoutElement elem in m_layouts)
+        //{
+        //    if(!elem.ignoreLayout)
+        //        elem.minWidth = value;
+        //}
+            
 
         m_layoutElem.minWidth = value;
         m_rect.sizeDelta = new Vector2(value, m_rect.sizeDelta.y);
