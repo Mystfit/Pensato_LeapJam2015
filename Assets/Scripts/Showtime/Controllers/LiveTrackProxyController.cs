@@ -10,8 +10,8 @@ public class LiveTrackProxyController : LiveProxyController<LiveTrackProxy>
         LiveTrackProxy track = createProxyUI(id.ToString());
         track.init(live, id, name, parent, color);
         track.gameObject.SetActive(false);
-        DeviceLookTracker tracker = track.deviceParent.GetComponent<DeviceLookTracker>();
-        tracker.eye = vr_eye;
+        //DeviceLookTracker tracker = track.deviceParent.GetComponent<DeviceLookTracker>();
+        //tracker.eye = vr_eye;
 
         return track;
     }

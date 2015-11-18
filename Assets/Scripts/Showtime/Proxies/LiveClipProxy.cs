@@ -35,7 +35,12 @@ public class LiveClipProxy : LiveProxy
     public bool isTriggered {
         get { return m_isTriggered; }
         set {
-            m_button.onGraphics.SetColor(Color.yellow);  //Need a clip button graphic type!
+            if (value)
+            {
+                m_button.onGraphics.SetColor(Color.yellow);  //Need a clip button graphic type!
+                m_button.offGraphics.SetColor(Color.yellow);
+                m_button.midGraphics.SetColor(Color.yellow);
+            }
             m_isTriggered = value;
         }
     }
@@ -49,13 +54,19 @@ public class LiveClipProxy : LiveProxy
             if (value)
             {
                 ((LiveTrackProxy)parent).playingClip(this);
-                databinder.SetCurrentData(true);
-                m_button.onGraphics.SetColor(m_button.MidGraphicsOnColor);  //Need a clip button graphic type!
+                //databinder.SetCurrentData(true);
+                m_button.onGraphics.SetColor(Color.magenta);  //Need a clip button graphic type!
+                m_button.offGraphics.SetColor(Color.magenta);
+                m_button.midGraphics.SetColor(Color.magenta);
             }
             else
             {
-                databinder.SetCurrentData(false);
+                //databinder.SetCurrentData(false);
                 m_isPlaying = value;
+                m_button.onGraphics.SetColor(m_button.BotGraphicsOnColor);  //Need a clip button graphic type!
+                m_button.offGraphics.SetColor(m_button.BotGraphicsOffColor);
+                m_button.midGraphics.SetColor(m_button.MidGraphicsOffColor);
+
             }
         }
     }

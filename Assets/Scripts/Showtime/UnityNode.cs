@@ -28,9 +28,18 @@ public class UnityNode : MonoBehaviour
         if (isStage)
         {
             m_node = new ZstNode(nodeName, stagePort);
-        } else {        
-            if(!String.IsNullOrEmpty(stageAddress))
-                stageAddress = "tcp://" + stageAddress + ":" + stagePort.ToString();
+        } else {
+            if (!GlobalConfig.Instance.ShowtimeUseBonjour)
+            {
+                if (!String.IsNullOrEmpty(stageAddress))
+                {
+                    stageAddress = "tcp://" + stageAddress + ":" + stagePort.ToString();
+                }
+                else
+                {
+                    stageAddress = "tcp://" + GlobalConfig.Instance.ShowtimeStageAddress + ":" + GlobalConfig.Instance.ShowtimeStagePort.ToString();
+                }
+            }
             StartCoroutine("CreateNode");
         }
     }

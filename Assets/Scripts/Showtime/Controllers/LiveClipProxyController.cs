@@ -34,10 +34,11 @@ public class LiveClipProxyController : LiveProxyController<LiveClipProxy>
         {
             if ((bool)msg.dict["triggered"])
             {
-                Debug.Log("Clip is triggered");
+                queueIncomingAction(() => proxy.isTriggered = true);
+
             } else if ((bool)msg.dict["playing"])
             {
-                Debug.Log("Clip is playing");
+                queueIncomingAction(() => proxy.isPlaying = true);
             }
         }
 

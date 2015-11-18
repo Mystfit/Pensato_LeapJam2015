@@ -4,6 +4,8 @@
 *.pyc
 
 Library
+*.suo
+*.vs
 Temp
 obj
 build
@@ -11,6 +13,7 @@ build
 *.pidb
 *.unityproj
 *.sln
+
 *.userprefs
 
 Live/TeslaRift\ Project/Icon?

@@ -45,7 +45,7 @@ public class LiveParameterProxy : LiveProxy
     public override void receive_value(object value)
     {
         m_dataBinder.awaitExternalData();
-        m_dataBinder.SetCurrentData((float)value);
+        m_dataBinder.SetCurrentData(MathTools.Remap((float)value, min, max, 0.0f, 1.0f));
     }
 
     public override void update_value(object value)
