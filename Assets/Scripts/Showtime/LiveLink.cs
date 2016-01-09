@@ -70,7 +70,8 @@ public class LiveLink : UnityNode {
     public object layoutUpdated(ZstMethod methodData)
     {
         Debug.Log("Received layout update from Live");
-        createLiveProxies(deserializeLayout(methodData.output.ToString()));
+        Debug.Log(methodData.output.ToString());
+        //createLiveProxies(deserializeLayout(methodData.output.ToString()));
         return null;
     }
 
@@ -89,7 +90,7 @@ public class LiveLink : UnityNode {
                 if (liveObjParams["parent"] != null) parentId = liveObjParams["parent"].ToString();
     
                 switch (liveObjParams["type"].ToString()){
-                    case "PyroDeviceParameter":
+                    case "LiveDeviceParameter":
                         Debug.Log("Enqueing parameter: " + id);
                         float min = float.Parse(liveObjParams["min"].ToString());
                         float max = float.Parse(liveObjParams["max"].ToString());
@@ -101,21 +102,21 @@ public class LiveLink : UnityNode {
                         float p_startval = float.Parse(liveObjParams["min"].ToString());
                         m_queuedProxyCreations.Enqueue(() => m_parameterController.createParameter(this, p_id, p_name, p_parentId, p_min, p_max, p_startval));
                         break;
-                    case "PyroDevice":
+                    case "LiveDevice":
                         Debug.Log("Enqueing Device: " + id);
                         string d_id = id;
                         string d_name = name;
                         string d_parentId = parentId;
                         m_queuedProxyCreations.Enqueue(() => m_deviceController.createDevice(this, d_id, d_name, d_parentId));
                         break;
-                    case "PyroClip":
+                    case "LiveClip":
                         Debug.Log("Enqueing Clip: " + id);
                         string cl_id = id;
                         string cl_name = name;
                         string cl_parentId = parentId;
                         m_queuedProxyCreations.Enqueue(() => m_clipController.createClip(this, cl_id, cl_name, cl_parentId));
                         break;
-                    case "PyroTrack":
+                    case "LiveTrack":
                         Debug.Log("Enqueing Track: " + id);
                         string t_id = id;
                         string t_name = name;
@@ -124,7 +125,7 @@ public class LiveLink : UnityNode {
 
                         m_queuedProxyCreations.Enqueue(() => m_trackController.createTrack(this, t_id, t_name, t_parentId, t_color));
                         break;
-                    case "PyroSong":
+                    case "LiveSong":
                         Debug.Log("Enqueing Song: " + id);
                         string sng_id = id;
                         string sng_name = name;
@@ -134,6 +135,7 @@ public class LiveLink : UnityNode {
                 }
             } else if(status == "removed")
             {
+                Debug.Log("Removing proxy: " + id);
                 if (m_liveProxies.ContainsKey(id))
                 {
                     Debug.Log("Removing proxy: " + id);
