@@ -1,5 +1,5 @@
 {
   "ShowtimeUseBonjour": false,
-  "ShowtimeStageAddress": "toastie",
+  "ShowtimeStageAddress": "localhost",
   "ShowtimeStagePort": 6000
 }
