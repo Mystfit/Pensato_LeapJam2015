@@ -9,6 +9,7 @@ public class ArcMesh : MonoBehaviour {
     public float startAngle = 0.0f;
     public float endAngle = 360.0f;
     public float height = 0.0f;
+    public float depth = 0.0f;
     public float radius = 1.0f;
     public int segments = 36;
     public bool closed = true;
@@ -22,29 +23,46 @@ public class ArcMesh : MonoBehaviour {
 
     public void Build()
     {
+        bool hasVolume = (depth > 0.0f);
+
         float angleDeg = (endAngle - startAngle) / segments;
         float angleInc = Mathf.Deg2Rad * angleDeg;
-        int actualSegments = segments+1;
+        int actualSegments = (segments+1) * ((hasVolume) ? 2 : 1);
 
         //If we are a closed shape and we're over 360 degrees, don't waste a hidden face
         actualSegments = (closed && endAngle - startAngle >= 360) ? actualSegments - 1 : actualSegments;
-        Vector3[] verts = new Vector3[actualSegments * 2];
-        Vector2[] uvs = new Vector2[actualSegments * 2];
-        int numQuads = (closed) ? actualSegments : segments;
-        int[] indicies = new int[numQuads * 6];
+        Vector3[] verts = new Vector3[actualSegments * ((hasVolume) ? 4 : 2)];
+        Vector2[] uvs = new Vector2[actualSegments * ((hasVolume) ? 4 : 2)];
+        int numQuads = (closed) ? actualSegments : segments * ((hasVolume) ? 4 : 1);
+        int[] indicies = new int[numQuads * 6 + ((hasVolume) ? 12 : 0)];
 
         for(int i = 0; i < actualSegments; i++)
         {
+            int offsetIndex = i % ((hasVolume) ? actualSegments / 2 : actualSegments);
             verts[i * 2] = new Vector3(
-                Mathf.Cos(angleInc * i + (Mathf.Deg2Rad * startAngle)) * radius,
+                Mathf.Cos(angleInc * offsetIndex + (Mathf.Deg2Rad * startAngle)) * (radius + depth),
                 height * 0.5f,
-                Mathf.Sin(angleInc * i + (Mathf.Deg2Rad * startAngle)) * radius);
+                Mathf.Sin(angleInc * offsetIndex + (Mathf.Deg2Rad * startAngle)) * (radius + depth));
             verts[i * 2 + 1] = new Vector3(
-                Mathf.Cos(angleInc * i + (Mathf.Deg2Rad * startAngle)) * radius,
+                Mathf.Cos(angleInc * offsetIndex + (Mathf.Deg2Rad * startAngle)) * (radius + depth),
                 height * -0.5f,
-                Mathf.Sin(angleInc * i + (Mathf.Deg2Rad * startAngle)) * radius);
-            uvs[i * 2] = new Vector2((float)i/ actualSegments,  1.0f);
-            uvs[i * 2 + 1] = new Vector2((float)i / actualSegments, 0.0f);
+                Mathf.Sin(angleInc * offsetIndex + (Mathf.Deg2Rad * startAngle)) * (radius + depth));
+
+            if (hasVolume)
+            {
+                verts[i * 2 + 2] = new Vector3(
+                    Mathf.Cos(angleInc * offsetIndex + (Mathf.Deg2Rad * startAngle)) * (radius - depth),
+                    height * -0.5f,
+                    Mathf.Sin(angleInc * offsetIndex + (Mathf.Deg2Rad * startAngle)) * (radius - depth));
+
+                verts[i * 2 + 3] = new Vector3(
+                   Mathf.Cos(angleInc * offsetIndex + (Mathf.Deg2Rad * startAngle)) * (radius - depth),
+                   height * 0.5f,
+                   Mathf.Sin(angleInc * offsetIndex + (Mathf.Deg2Rad * startAngle)) * (radius - depth));
+            }
+
+            uvs[i * 2] = new Vector2((float)offsetIndex / actualSegments,  1.0f);
+            uvs[i * 2 + 1] = new Vector2((float)offsetIndex / actualSegments, 0.0f);
         }
 
         for (int i = 0; i < numQuads; i++)
