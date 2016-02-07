@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ScalableSlider : PensatoGrabbable {
+public class ScalableSlider : VRGrabbable {
     public GameObject m_dragGraphics;
 
     void Awake()
@@ -9,7 +9,6 @@ public class ScalableSlider : PensatoGrabbable {
         if((LiveParameterProxyController)LiveParameterProxyController.instance != null)
             m_dragGraphics = ((LiveParameterProxyController)LiveParameterProxyController.instance).dragPrefab;
 
-        scalable_ = true;
         IsCloneable = true;
     }
 

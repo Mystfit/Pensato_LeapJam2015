@@ -1,20 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public interface IGrabbable
+namespace LeapInteractions
 {
-    void OnGrab();
-    void OnRelease();
-    void OnStartHover();
-    void OnStopHover();
-    bool IsGrabbed {get; }
-    bool IsCloneable { get; }
-    bool IsHovered { get; }
-    bool rotateQuickly { get; }
-
-    void OnStartScale();
-    void ContinueScale(Vector3 scalerA, Vector3 scalerB);
-    void OnStopScale();
-    bool IsScaling { get; }
-    bool IsScalable { get; }
+    public interface IGrabbable
+    {
+        void OnGrab();
+        void OnRelease();
+        void OnStartHover();
+        void OnStopHover();
+        bool IsGrabbed {get; }
+        bool IsCloneable { get; }
+        bool IsHovered { get; }
+        bool rotateQuickly { get; }
+    }
 }

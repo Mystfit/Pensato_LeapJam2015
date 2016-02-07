@@ -1,12 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public interface IDockable
+namespace LeapInteractions
 {
-    void OnDropped(Transform droppedObject);
-    void OnHoverStart(Transform hoverObject);
-    void OnHoverEnd(Transform hoverObject);
-    void ContinueHover(Transform hoverObject);
-    void ChildLeaving(IGrabbable child);
-    bool IsDockable { get; }
+    public interface IDockable
+    {
+        void OnDropped(Transform droppedObject);
+        void OnHoverStart(Transform hoverObject);
+        void OnHoverEnd(Transform hoverObject);
+        void ContinueHover(Transform hoverObject);
+        void ChildLeaving(IGrabbable child);
+        bool IsDockable { get; }
+    }
 }
