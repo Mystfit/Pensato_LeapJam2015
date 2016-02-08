@@ -1,30 +1,38 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using LMWidgets;
 using System.Collections.Generic;
 
 public class HandPoseTrainingController : MonoBehaviour
 {
+    //UI
+    public Text poseTitle;
+    public Text poseDescription;
+    public Text poseAltDescription;
+    public Text poseTimer;
+    public Image poseRecording;
+    public ButtonBase calibrationStartButton;
+    public ButtonBase calibrationSaveButton;
+
+    //RBF References
     public string[] gestures;
     public HandPoseRBF leftHandRBF;
     public HandPoseRBF rightHandRBF;
     private HandPoseRBF currentTrainingHand;
 
-    public Text poseTitle;
-    public Text poseDescription;
-    public Text poseTimer;
-    public Image poseRecording;
-
     //Training
-    public float m_calibrateReadyCountdown = 3.0f;
-    public float m_calibrateDuration = 2.0f;
-    public int m_calibrationSamples = 60;
-    public int numTrainingTests = 5;
-    protected float m_currentCalibrateTime = 0.0f;
+    public float poseCountdown = 3.0f;
+    public int calibrationSamples = 150;
+    private float m_currentPoseTime;
     private List<double[]> m_currentCalibrationSamples;
+    private int m_currentTrainingGestureNumTargets;
     private int m_currentTrainingGestureIndex;
     private int m_currentTrainingTestIndex;
     private double[] m_calibrationAvg;
+
+    //Training targets
+    private Dictionary<string, GameObject> m_trainingTargetScenes;
 
     //Calibration state
     public enum CalibrationState
@@ -40,38 +48,78 @@ public class HandPoseTrainingController : MonoBehaviour
 
     void Start()
     {
+        m_trainingTargetScenes = new Dictionary<string, GameObject>();
+        foreach (string gesture in gestures)
+        {
+            GameObject trainingTargets = transform.FindChild(gesture).gameObject;
+            trainingTargets.SetActive(false);
+            m_trainingTargetScenes.Add(gesture, trainingTargets);
+        }
+
+        poseRecording.gameObject.SetActive(false);
+
         m_currentCalibrationSamples = new List<double[]>();
         leftHandRBF.Init(gestures);
         rightHandRBF.Init(gestures);
+
+        calibrationStartButton.transform.parent.gameObject.SetActive(true);
+        calibrationSaveButton.transform.parent.gameObject.SetActive(false);
+        calibrationStartButton.StartHandler += CalibrationStartButton_StartHandler;
+        calibrationSaveButton.StartHandler += CalibrationSaveButton_StartHandler;
     }
 
-    public void StartTraining()
+    private void CalibrationSaveButton_StartHandler(object sender, EventArg<bool> e)
+    {
+        leftHandRBF.SaveRBF();
+        rightHandRBF.SaveRBF();
+    }
+
+    private void CalibrationStartButton_StartHandler(object sender, EventArg<bool> e)
     {
         m_calibrationState = CalibrationState.POSE_SETUP;
         currentTrainingHand = rightHandRBF;
         m_currentTrainingGestureIndex = 0;
         m_currentTrainingTestIndex = 0;
-        UpdateTrainingTargetColours(gestures[0], 0);
+        calibrationStartButton.transform.parent.gameObject.SetActive(false);
+        UpdateTrainingTargetsVisible(gestures[m_currentTrainingGestureIndex]);
+        UpdateTrainingTargetColours(gestures[m_currentTrainingGestureIndex], m_currentTrainingTestIndex);
     }
 
-    public void UpdateTrainingTargetColours(string gesture, int trainingPointIndex)
+
+    private void UpdateTrainingTargetColours(string gesture, int trainingPointIndex)
     {
-        Transform trainingScene = transform.FindChild(gesture);
-        if (trainingScene != null)
+        Transform trainingScene = m_trainingTargetScenes[gesture].transform;
+
+        for (int i = 0; i < trainingScene.childCount; i++)
         {
-            for (int i = 0; i < trainingScene.childCount; i++)
+            if (i == trainingPointIndex)
             {
-                if (i == trainingPointIndex)
-                {
-                    trainingScene.GetChild(trainingPointIndex).GetComponent<Renderer>().material.SetColor("_Color", new Color(1, 0, 0, 1));
-                }
-                else
-                {
-                    trainingScene.GetChild(i).GetComponent<Renderer>().material.SetColor("_Color", new Color(1, 1, 1, 1));
-                }
+                Transform target = trainingScene.GetChild(trainingPointIndex);
+                target.GetComponent<Renderer>().material.SetColor("_Color", new Color(1.0f, 0.0f, 0.0f, 1.0f));
+                poseAltDescription.text = target.gameObject.name;
+            }
+            else
+            {
+                trainingScene.GetChild(i).GetComponent<Renderer>().material.SetColor("_Color", new Color(1.0f, 1.0f, 1.0f, 0.2f));
             }
         }
     }
+
+    private void UpdateTrainingTargetsVisible(string gesture)
+    {
+        m_currentTrainingGestureNumTargets = m_trainingTargetScenes[gestures[m_currentTrainingGestureIndex]].transform.childCount;
+        foreach (KeyValuePair<string, GameObject> pair in m_trainingTargetScenes)
+        {
+            if(pair.Key == gesture)
+            {
+                pair.Value.SetActive(true);
+            } else
+            {
+                pair.Value.SetActive(false);
+            }
+        }
+    }
+
 
     void Update()
     {
@@ -80,11 +128,12 @@ public class HandPoseTrainingController : MonoBehaviour
             case CalibrationState.AWAITING_CALIBRATION:
                 break;
             case CalibrationState.POSE_SETUP:
-                m_calibrateReadyCountdown = m_currentCalibrateTime;
-                if (m_currentTrainingTestIndex >= numTrainingTests)
+                m_currentPoseTime = poseCountdown;
+                if (m_currentTrainingTestIndex >= m_currentTrainingGestureNumTargets)
                 {
                     m_currentTrainingGestureIndex++;
                     m_currentTrainingTestIndex = 0;
+                    UpdateTrainingTargetsVisible(gestures[m_currentTrainingGestureIndex]);
                 }
 
                 if (m_currentTrainingGestureIndex >= gestures.Length)
@@ -94,15 +143,19 @@ public class HandPoseTrainingController : MonoBehaviour
                         currentTrainingHand = leftHandRBF;
                         m_currentTrainingTestIndex = 0;
                         m_currentTrainingGestureIndex = 0;
+                        UpdateTrainingTargetsVisible(gestures[m_currentTrainingGestureIndex]);
+                        UpdateTrainingTargetColours(gestures[m_currentTrainingGestureIndex], m_currentTrainingTestIndex);
                     }
                     else
                     {
                         m_calibrationState = CalibrationState.CALIBRATED;
-                        leftHandRBF.SaveRBF();
-                        rightHandRBF.SaveRBF();
+                        leftHandRBF.EndTraining();
+                        rightHandRBF.EndTraining();
+                        calibrationSaveButton.transform.parent.gameObject.SetActive(true);
                         poseTitle.text = "Training complete!";
                         poseDescription.text = "";
                         poseTimer.text = "";
+                        poseAltDescription.text = "";
                     }
                     break;
                 }
@@ -114,7 +167,7 @@ public class HandPoseTrainingController : MonoBehaviour
                 } else
                 {
                     //Update calibration gui
-                    poseTitle.text = string.Format("{0}: {1}", gestures[m_currentTrainingGestureIndex], m_currentTrainingTestIndex);
+                    poseTitle.text = gestures[m_currentTrainingGestureIndex];
                     string handText = (currentTrainingHand == rightHandRBF) ? "right hand" : "left hand";
                     poseDescription.text = string.Format("Use your {0} to {1} the target.", handText, gestures[m_currentTrainingGestureIndex]);
 
@@ -131,14 +184,14 @@ public class HandPoseTrainingController : MonoBehaviour
                 }
 
                 //Countdown timer
-                m_calibrateReadyCountdown -= Time.deltaTime;
-                poseTimer.text = m_calibrateReadyCountdown.ToString();
+                m_currentPoseTime -= Time.deltaTime;
+                poseTimer.text = m_currentPoseTime.ToString();
 
                 //Timer complete. Start capturing pose samples
-                if (m_calibrateReadyCountdown <= 0.0f)
+                if (m_currentPoseTime <= 0.0f)
                 {
+                    poseTimer.text = "RECORDING";
                     m_calibrationState = CalibrationState.CAPTURING_SAMPLES;
-                    m_currentCalibrateTime = m_calibrateDuration;
                     poseRecording.gameObject.SetActive(true);
                 }
                 break;
@@ -146,14 +199,14 @@ public class HandPoseTrainingController : MonoBehaviour
                 if(currentTrainingHand.handModel == null)
                 {
                     m_calibrationState = CalibrationState.WAITING_FOR_POSE;
-                    m_currentCalibrateTime = m_calibrateReadyCountdown;
+                    m_currentPoseTime = poseCountdown;
                     poseRecording.gameObject.SetActive(false);
                     break;
                 }
                 m_currentCalibrationSamples.Add(currentTrainingHand.GetFlatBoneRotations());
 
                 //Average sampled values
-                if (m_currentCalibrationSamples.Count >= m_calibrationSamples)
+                if (m_currentCalibrationSamples.Count >= calibrationSamples)
                 {
                     double[] m_calibrationTotal = new double[currentTrainingHand.RBF.numInputs];
                     m_calibrationAvg = new double[currentTrainingHand.RBF.numInputs];
@@ -166,13 +219,14 @@ public class HandPoseTrainingController : MonoBehaviour
                     }
                     for (int i = 0; i < m_calibrationTotal.Length; i++)
                     {
-                        m_calibrationAvg[i] = m_calibrationTotal[i] / m_calibrationSamples;
+                        m_calibrationAvg[i] = m_calibrationTotal[i] / calibrationSamples;
                     }
 
                     //Save training data for current pose into RBF
                     currentTrainingHand.SaveTrainingPoint(m_currentTrainingGestureIndex, m_calibrationAvg);
                     poseRecording.gameObject.SetActive(false);
-
+                    m_currentCalibrationSamples.Clear();
+                    
                     //Move onto the next training target
                     m_currentTrainingTestIndex++;
                     m_calibrationState = CalibrationState.POSE_SETUP;

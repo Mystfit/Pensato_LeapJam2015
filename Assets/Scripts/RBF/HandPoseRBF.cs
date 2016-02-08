@@ -57,7 +57,7 @@ public class HandPoseRBF : MonoBehaviour
     public HandModel handModel { set {
             if(value == null)
             {
-                Debug.Log("hand leaving");
+                Debug.Log("Hand leaving");
             }
             m_handModel = value;}
         get { return m_handModel; } }
@@ -76,12 +76,15 @@ public class HandPoseRBF : MonoBehaviour
         return false;
     }
 
-    public void SaveRBF()
+    public void EndTraining()
     {
         m_rbf.calculateWeights();
         isTrained = true;
         Debug.Log("Calibration complete!");
+    }
 
+    public void SaveRBF()
+    {
         if (m_rbfFilePath != String.Empty)
             m_rbf.SaveRBF(m_rbfFilePath);
     }
@@ -99,7 +102,7 @@ public class HandPoseRBF : MonoBehaviour
         {
             for (int j = 0; j < FingerModel.NUM_BONES; j++)
             {
-                Quaternion rot = m_handModel.fingers[i].GetBoneRotation(j);
+                Quaternion rot = Quaternion.Inverse(m_handModel.GetPalmRotation()) * m_handModel.fingers[i].GetBoneRotation(j);
                 boneRotations[(i * FingerModel.NUM_BONES * 4) + (j * 4)] = rot.w;
                 boneRotations[(i * FingerModel.NUM_BONES * 4) + (j * 4) + 1] = rot.x;
                 boneRotations[(i * FingerModel.NUM_BONES * 4) + (j * 4) + 2] = rot.y;
@@ -125,15 +128,16 @@ public class HandPoseRBF : MonoBehaviour
     private void InterpolateGestures()
     {
         double[] gestureOutput = m_rbf.calculateOutput(GetFlatBoneRotations());
-        Debug.Log(gestureOutput);
 
         //Calculate gesture change velocities
+        string gestureDump = "";
         for (int i = 0; i < m_gestures.Length; i++)
         {
+            gestureDump += string.Format("{0}:{1} ", m_gestures[i], gestureOutput[i]);
             m_gestureVelocity[i] = gestureOutput[i] - m_lastGestureOutput[i];
             if (m_gestureVelocity[i] < 0) m_gestureVelocity[i] *= -1.0;
         }
-
+ 
         m_lastGestureOutput = gestureOutput;
 
         double largestVal = 0.0;
@@ -149,6 +153,7 @@ public class HandPoseRBF : MonoBehaviour
         }
 
         m_currentGesture = m_gestures[activeIndex];
+        Debug.Log(string.Format("{0} | Active: {1}", gestureDump, m_gestures[activeIndex]));
 
         //Delay the reported gesture change by a frame count to let the RBF settle
         if (m_currentGesture != m_lastGesture)
