@@ -4,8 +4,8 @@ using System.Collections;
 
 public class HandPoseController : MonoBehaviour
 {
-    public HandPoseRBF m_leftGlove;
-    public HandPoseRBF m_rightGlove;
+    public HandPoseRBF lefthandRBF;
+    public HandPoseRBF righthandRBF;
     public bool m_leftHandActive = true;
     public bool m_rightHandActive = true;
 
@@ -20,16 +20,16 @@ public class HandPoseController : MonoBehaviour
     void HandCreated(HandModel hand)
     {
         if (hand.GetLeapHand().IsLeft)
-            m_leftGlove.handModel = hand;
+            lefthandRBF.handModel = hand;
         else
-            m_rightGlove.handModel = hand;
+            righthandRBF.handModel = hand;
     }
 
     void HandDestroyed(HandModel hand)
     {
         if (hand.GetLeapHand().IsLeft)
-            m_leftGlove.handModel = null;
+            lefthandRBF.handModel = null;
         else
-            m_rightGlove.handModel = null;
+            righthandRBF.handModel = null;
     }
 }

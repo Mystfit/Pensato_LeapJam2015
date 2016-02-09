@@ -15,18 +15,21 @@ public class HandPoseRBF : MonoBehaviour
     private RBFCore m_rbf;
     public RBFCore RBF { get { return m_rbf; } }
     public double m_sigma = 0.5;
+    public string trainingFilePath = "";
 
     //Gestures
+    public static string UNRECOGNIZED_GESTURE = "UNRECOGNIZED";
     public string[] m_gestures;
-    private string m_currentGesture;
-    private string m_lastGesture;
-    private string m_lastGestureDown;
+    private int m_currentGesture;
+    private int m_lastGesture;
+    private int m_lastGestureDown;
     private int m_currentGestureTimer = 0;
-    public string m_activeGesture;
-    private string m_activeGestureDown;
+    private double m_confidence;
+    private int m_activeGesture;
+    private int m_activeGestureDown;
     private bool m_isDirty = true;
-    public string m_rbfFilePath = "";
     public bool m_loadRbfFromFile = false;
+    public double gestureThreshold = 0.7;
 
     //Gesture change speeds
     private double[] m_lastGestureOutput;
@@ -62,20 +65,6 @@ public class HandPoseRBF : MonoBehaviour
             m_handModel = value;}
         get { return m_handModel; } }
 
-    public bool LoadRBF()
-    {
-        if (m_rbfFilePath != String.Empty)
-        {
-            if (m_rbf.LoadRBF(m_rbfFilePath))
-            {
-                Debug.Log("Glove RBF loaded from file");
-                isTrained = true;
-                return true;
-            }
-        }
-        return false;
-    }
-
     public void EndTraining()
     {
         m_rbf.calculateWeights();
@@ -85,8 +74,31 @@ public class HandPoseRBF : MonoBehaviour
 
     public void SaveRBF()
     {
-        if (m_rbfFilePath != String.Empty)
-            m_rbf.SaveRBF(m_rbfFilePath);
+        SaveRBF(trainingFilePath);
+    }
+
+    public void SaveRBF(string path)
+    {
+        if (path != String.Empty)
+            m_rbf.SaveRBF(path);
+    }
+
+    public bool LoadRBF()
+    {
+        return LoadRBF(trainingFilePath);
+    }
+
+    public bool LoadRBF(string path)
+    {
+        if (path != String.Empty)
+        {
+            if (m_rbf.LoadRBF(path))
+            {
+                isTrained = true;
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -98,15 +110,15 @@ public class HandPoseRBF : MonoBehaviour
     {
         double[] boneRotations = new double[m_rbf.numInputs];
         int rowLength = m_handModel.fingers.Length * FingerModel.NUM_BONES * 4;
-        for (int i = 0; i < m_handModel.fingers.Length; i++)
+        for (int finger = 0; finger < m_handModel.fingers.Length; finger++)
         {
-            for (int j = 0; j < FingerModel.NUM_BONES; j++)
+            for (int bone = 0; bone < FingerModel.NUM_BONES; bone++)
             {
-                Quaternion rot = Quaternion.Inverse(m_handModel.GetPalmRotation()) * m_handModel.fingers[i].GetBoneRotation(j);
-                boneRotations[(i * FingerModel.NUM_BONES * 4) + (j * 4)] = rot.w;
-                boneRotations[(i * FingerModel.NUM_BONES * 4) + (j * 4) + 1] = rot.x;
-                boneRotations[(i * FingerModel.NUM_BONES * 4) + (j * 4) + 2] = rot.y;
-                boneRotations[(i * FingerModel.NUM_BONES * 4) + (j * 4) + 3] = rot.z;
+                Quaternion rot = Quaternion.Inverse((bone == 0) ? m_handModel.GetPalmRotation() : m_handModel.fingers[finger].GetBoneRotation(bone - 1)) * m_handModel.fingers[finger].GetBoneRotation(bone);
+                boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4)] = rot.w;
+                boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 1] = rot.x;
+                boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 2] = rot.y;
+                boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 3] = rot.z;
             }
         }
         return boneRotations;
@@ -140,9 +152,9 @@ public class HandPoseRBF : MonoBehaviour
  
         m_lastGestureOutput = gestureOutput;
 
+        //Find current gesture
         double largestVal = 0.0;
         int activeIndex = 0;
-
         for (int i = 0; i < gestureOutput.Length; i++)
         {
             if (gestureOutput[i] > largestVal)
@@ -152,8 +164,18 @@ public class HandPoseRBF : MonoBehaviour
             }
         }
 
-        m_currentGesture = m_gestures[activeIndex];
-        Debug.Log(string.Format("{0} | Active: {1}", gestureDump, m_gestures[activeIndex]));
+        if(largestVal > gestureThreshold && gestureThreshold > 0.0)
+        {
+            m_currentGesture = activeIndex;
+            m_confidence = largestVal;
+            Debug.Log(string.Format("{0} | Active: {1}", gestureDump, m_gestures[activeIndex]));
+        }
+        else
+        {
+            Debug.Log("No recognized gestures");
+            m_currentGesture = -1;
+        }
+
 
         //Delay the reported gesture change by a frame count to let the RBF settle
         if (m_currentGesture != m_lastGesture)
@@ -170,11 +192,10 @@ public class HandPoseRBF : MonoBehaviour
                 m_activeGestureDown = m_activeGesture;
                 activeGestureVelocity = m_gestureVelocity[activeIndex];
                 SetDirty();
-                //SetCollider(activeIndex);
             }
             else
             {
-                m_activeGestureDown = "";
+                m_activeGestureDown = -1;
                 SetClean();
             }
 
@@ -196,11 +217,12 @@ public class HandPoseRBF : MonoBehaviour
     /*
      * Getters
      */
-    public string activeGesture { get { return m_activeGesture; } }
-    public string[] gestureTypes { get { return m_gestures; } }
+    public string activeGesture { get { return (m_activeGesture > -1) ? gestures[m_activeGesture] : UNRECOGNIZED_GESTURE; } }
+    public double confidence { get { return Math.Round(m_confidence, 2); } }
+    public string[] gestures { get { return m_gestures; } }
     public bool GetGestureDown(string gesture)
     {
-        if (m_activeGestureDown == gesture && m_activeGestureDown != "")
+        if (gestures[m_activeGestureDown] == gesture && m_activeGestureDown > -1)
             return true;
         return false;
     }
@@ -211,9 +233,9 @@ public class HandPoseRBF : MonoBehaviour
 
     public string GetGestureName(int index)
     {
-        if (index < m_gestures.Length)
+        if (index < m_gestures.Length && index > -1)
             return m_gestures[index];
-        return null;
+        return UNRECOGNIZED_GESTURE;
     }
 
     /*

@@ -13,7 +13,13 @@ public class ActiveHandPoseText : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if(hand.isTrained)
-            poseText.text = hand.activeGesture;
+        if (hand.isTrained)
+        {
+            if (hand.activeGesture == HandPoseRBF.UNRECOGNIZED_GESTURE)
+                poseText.color = Color.grey;
+            else
+                poseText.color = Color.white;
+            poseText.text = string.Format("{0}:{1}", hand.activeGesture, hand.confidence);
+        }
     }
 }
