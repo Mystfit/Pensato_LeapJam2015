@@ -1,23 +1,24 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using HandPoses;
 
 public class HandPoseController : MonoBehaviour
 {
+    // References
+    public HandController leapController;
     public HandPoseRBF lefthandRBF;
     public HandPoseRBF righthandRBF;
-    public bool m_leftHandActive = true;
-    public bool m_rightHandActive = true;
 
-    // Use this for initialization
     void Start()
     {
-        HandController handCtl = GetComponent<HandController>();
-        handCtl.onCreateHand += HandCreated;
-        handCtl.onDestroyHand += HandDestroyed;
+        leapController.onCreateHand += HandCreated;
+        leapController.onDestroyHand += HandDestroyed;
     }
 
-    void HandCreated(HandModel hand)
+    private void HandCreated(HandModel hand)
     {
         if (hand.GetLeapHand().IsLeft)
             lefthandRBF.handModel = hand;
@@ -25,11 +26,16 @@ public class HandPoseController : MonoBehaviour
             righthandRBF.handModel = hand;
     }
 
-    void HandDestroyed(HandModel hand)
+    private void HandDestroyed(HandModel hand)
     {
         if (hand.GetLeapHand().IsLeft)
             lefthandRBF.handModel = null;
         else
             righthandRBF.handModel = null;
+    }
+
+    void Update()
+    {
+
     }
 }

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using HandPoses;
 using System.Collections;
 
 public class ActiveHandPoseText : MonoBehaviour {
@@ -15,11 +16,11 @@ public class ActiveHandPoseText : MonoBehaviour {
 	void Update () {
         if (hand.isTrained)
         {
-            if (hand.activeGesture == HandPoseRBF.UNRECOGNIZED_GESTURE)
+            if (hand.activePose == HandPoseRBF.PoseType.UNRECOGNIZED)
                 poseText.color = Color.grey;
             else
                 poseText.color = Color.white;
-            poseText.text = string.Format("{0}:{1}", hand.activeGesture, hand.confidence);
+            poseText.text = string.Format("{0}:{1}", hand.activePose, hand.poseConfidence);
         }
     }
 }
