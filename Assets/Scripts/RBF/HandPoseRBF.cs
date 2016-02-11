@@ -63,10 +63,13 @@ namespace HandPoses
         public double activePoseVelocity;
         public int m_poseSwitchDelay = 0;
 
-        //Training events
+        //Events
         public delegate void PoseCompleteEventHandler(int index);
         public event PoseCompleteEventHandler onPoseCalibrated;
         public event PoseCompleteEventHandler onTrainingPointSaved;
+
+        public delegate void PoseChangedEventHandler(HandPoseRBF.PoseType pose);
+        public event PoseChangedEventHandler onPoseChanged;
 
         private List<double[]>[] m_bufferedTraining;
         public bool isTrained;
@@ -78,11 +81,16 @@ namespace HandPoses
             m_rbf.setSigma(m_sigma);
             m_poseVelocity = new double[validPoseNames.Length];
             m_lastPoseOutput = new double[validPoseNames.Length];
-            m_bufferedTraining = new List<double[]>[HandPoseRBF.validPoseNames.Length];
-            for (int i = 0; i < m_bufferedTraining.Length; i++) m_bufferedTraining[i] = new List<double[]>();
+            CreateTrainingBuffer();
 
             if (m_loadRbfFromFile)
                 LoadRBF();
+        }
+
+        void CreateTrainingBuffer()
+        {
+            m_bufferedTraining = new List<double[]>[HandPoseRBF.validPoseNames.Length];
+            for (int i = 0; i < m_bufferedTraining.Length; i++) m_bufferedTraining[i] = new List<double[]>();
         }
 
         void Update()
@@ -211,7 +219,7 @@ namespace HandPoses
                     m_rbf.addTrainingPoint(trainingData, BuildRBFPoseOuput((HandPoseRBF.PoseType)pose));
 
             //Clear buffered training data when we're done
-            m_bufferedTraining = new List<double[]>[HandPoseRBF.validPoseNames.Length];
+            CreateTrainingBuffer();
         }
 
         /// <summary>
@@ -262,6 +270,7 @@ namespace HandPoses
             if (m_currentPoseTimer > m_poseSwitchDelay)
             {
                 m_activePose = m_currentPose;
+                onPoseChanged(m_activePose);
 
                 if (m_activePose != m_lastPoseDown)
                 {

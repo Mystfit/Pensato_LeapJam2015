@@ -33,9 +33,4 @@ public class HandPoseController : MonoBehaviour
         else
             righthandRBF.handModel = null;
     }
-
-    void Update()
-    {
-
-    }
 }

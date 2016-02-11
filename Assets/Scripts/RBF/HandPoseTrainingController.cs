@@ -34,6 +34,7 @@ namespace HandPoses
         //Training
         public float poseCountdown = 3.0f;
         public int calibrationSamples = 150;
+        public float sigma = 0.5f;
         private float m_currentPoseTime;
         private List<double[]> m_currentCalibrationSamples;
         private int m_currentTrainingPoseNumTargets;
@@ -188,7 +189,7 @@ namespace HandPoses
 
         void Update()
         {
-            if (m_calibrationState == CalibrationState.WAITING_FOR_POSE || 
+            if (m_calibrationState == CalibrationState.WAITING_FOR_POSE ||
                 m_calibrationState == CalibrationState.CAPTURING_SAMPLES ||
                 m_calibrationState == CalibrationState.POSE_SETUP)
             {
@@ -234,10 +235,10 @@ namespace HandPoses
                             m_calibrationState = CalibrationState.CALIBRATED;
                             leftHandRBF.EndTraining();
                             rightHandRBF.EndTraining();
+                            foreach (KeyValuePair<string, GameObject> t in m_trainingTargetScenes)
+                                t.Value.SetActive(false);
                             calibrationSaveButton.transform.parent.gameObject.SetActive(true);
-                            poseTitle.text = "Training complete!";
-                            poseDescription.text = "";
-                            poseTimer.text = "";
+                            calibrationStartButton.transform.parent.gameObject.SetActive(true);
                             poseUI.gameObject.SetActive(false);
                             poseEndScreen.gameObject.SetActive(true);
                             sandbox.gameObject.SetActive(true);
