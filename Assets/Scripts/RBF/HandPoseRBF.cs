@@ -12,7 +12,7 @@ namespace HandPoses
         // Poses
         public enum PoseType { UNRECOGNIZED = -1, NEUTRAL = 0, GRASP, PINCH_INDEX, PINCH_MID, PINCH_RING, PINCH_PINKY };
         public enum PoseCategory { NEUTRAL = 0, GRASP, PINCH };
-        private Dictionary<PoseType, PoseCategory> m_poseCategoryLookup = new Dictionary<PoseType, PoseCategory>()
+        private static Dictionary<PoseType, PoseCategory> poseCategoryLookup = new Dictionary<PoseType, PoseCategory>()
         {
             { PoseType.NEUTRAL, PoseCategory.NEUTRAL },
             { PoseType.GRASP, PoseCategory.GRASP },
@@ -22,6 +22,8 @@ namespace HandPoses
             { PoseType.PINCH_PINKY, PoseCategory.PINCH }
         };
         public static string GetPoseName(PoseType pose) { return Enum.GetName(typeof(PoseType), pose); }
+        public static PoseCategory GetPoseCategory(PoseType pose) { return poseCategoryLookup[pose]; }
+
         public static string[] allPoseNames { get { return Enum.GetNames(typeof(PoseType)); } }
         public static string[] validPoseNames { get { return Enum.GetNames(typeof(PoseType)).Cast<string>().Where(p => p != GetPoseName(PoseType.UNRECOGNIZED) ).ToArray(); } }
 
@@ -70,6 +72,9 @@ namespace HandPoses
 
         public delegate void PoseChangedEventHandler(HandPoseRBF.PoseType pose);
         public event PoseChangedEventHandler onPoseChanged;
+
+        public delegate void PoseCategoryChangedEventHandler(HandPoseRBF.PoseCategory pose);
+        public event PoseCategoryChangedEventHandler onPoseCategoryChanged;
 
         private List<double[]>[] m_bufferedTraining;
         public bool isTrained;
@@ -232,6 +237,7 @@ namespace HandPoses
             //Calculate pose change velocities
             for (int i = 0; i < validPoseNames.Length; i++)
             {
+                poseRBFOutput[i] = Utils.MathTools.Clamp((float)poseRBFOutput[i], 0.0f, 1.0f);
                 m_poseVelocity[i] = poseRBFOutput[i] - m_lastPoseOutput[i];
                 if (m_poseVelocity[i] < 0) m_poseVelocity[i] *= -1.0;
             }
@@ -262,15 +268,18 @@ namespace HandPoses
 
 
             //Delay the reported pose change by a frame count to let the RBF settle
+            //if (m_currentPose != m_lastPose)
+            //    m_currentPoseTimer = 0;
+            //else
+            //    m_currentPoseTimer++;
+            //if (m_currentPoseTimer > m_poseSwitchDelay)
             if (m_currentPose != m_lastPose)
-                m_currentPoseTimer = 0;
-            else
-                m_currentPoseTimer++;
-
-            if (m_currentPoseTimer > m_poseSwitchDelay)
             {
                 m_activePose = m_currentPose;
                 onPoseChanged(m_activePose);
+
+                if (GetPoseCategory(m_lastPose) != GetPoseCategory(m_activePose))
+                    onPoseCategoryChanged(GetPoseCategory(m_activePose));
 
                 if (m_activePose != m_lastPoseDown)
                 {

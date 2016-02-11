@@ -140,6 +140,8 @@ namespace HandPoses
             currentTrainingHand = rightHandRBF;
             m_currentTrainingPose = 0;
             m_currentTrainingPoseTest = 0;
+            leftHandRBF.isTrained = false;
+            rightHandRBF.isTrained = false;
 
             //UI Updates
             calibrationStartButton.transform.parent.gameObject.SetActive(false);
