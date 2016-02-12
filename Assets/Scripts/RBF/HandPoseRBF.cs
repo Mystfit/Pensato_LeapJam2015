@@ -14,6 +14,7 @@ namespace HandPoses
         public enum PoseCategory { NEUTRAL = 0, GRASP, PINCH };
         private static Dictionary<PoseType, PoseCategory> poseCategoryLookup = new Dictionary<PoseType, PoseCategory>()
         {
+            { PoseType.UNRECOGNIZED, PoseCategory.NEUTRAL },
             { PoseType.NEUTRAL, PoseCategory.NEUTRAL },
             { PoseType.GRASP, PoseCategory.GRASP },
             { PoseType.PINCH_INDEX, PoseCategory.PINCH },
@@ -22,7 +23,18 @@ namespace HandPoses
             { PoseType.PINCH_PINKY, PoseCategory.PINCH }
         };
         public static string GetPoseName(PoseType pose) { return Enum.GetName(typeof(PoseType), pose); }
-        public static PoseCategory GetPoseCategory(PoseType pose) { return poseCategoryLookup[pose]; }
+        public static PoseCategory GetPoseCategory(PoseType pose) {
+
+            try
+            {
+                PoseCategory p = poseCategoryLookup[pose];
+                return p;
+            } catch (KeyNotFoundException e)
+            {
+                Debug.Log(e);
+            }
+            return 0;
+        }
 
         public static string[] allPoseNames { get { return Enum.GetNames(typeof(PoseType)); } }
         public static string[] validPoseNames { get { return Enum.GetNames(typeof(PoseType)).Cast<string>().Where(p => p != GetPoseName(PoseType.UNRECOGNIZED) ).ToArray(); } }
@@ -279,7 +291,7 @@ namespace HandPoses
                 onPoseChanged(m_activePose);
 
                 if (GetPoseCategory(m_lastPose) != GetPoseCategory(m_activePose))
-                    onPoseCategoryChanged(GetPoseCategory(m_activePose));
+                    if(onPoseCategoryChanged != null) onPoseCategoryChanged(GetPoseCategory(m_activePose));
 
                 if (m_activePose != m_lastPoseDown)
                 {

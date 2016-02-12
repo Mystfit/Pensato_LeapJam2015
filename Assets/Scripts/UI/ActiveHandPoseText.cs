@@ -8,7 +8,6 @@ public class ActiveHandPoseText : MonoBehaviour {
     private Text poseText;
     public HandPoseRBF hand;
 
-	// Use this for initialization
 	void Start () {
         poseText = GetComponent<Text>();
         hand.onPoseChanged += Hand_onPoseChanged;

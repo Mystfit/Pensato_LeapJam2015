@@ -6,12 +6,14 @@ using System.Text;
 
 namespace LeapInteractions
 {
-    interface IZoomable
+    public enum ZoomStatus { MINIMIZED = 0, MIN_TO_MAX, MAXIMIZED, MAX_TO_MIN };
+
+    public interface IZoomable
     {
-        void OnStartScale();
-        void ContinueScale(Vector3 scalerA, Vector3 scalerB);
-        void OnStopScale();
-        bool IsScaling { get; }
-        bool IsScalable { get; }
+        ZoomStatus Zoom { get; set; }
+        void OnStartZoom();
+        void ContinueZoom(Vector3 firstScalePoint, Vector3 secondScalePoint);
+        void OnStopZoom();
+        bool IsZoomable { get; }
     }
 }

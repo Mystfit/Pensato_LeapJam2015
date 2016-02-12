@@ -11,7 +11,6 @@ public class RBFMonitor : MonoBehaviour {
     private LayoutElement[] bars;
     public float maxHeight = 1.0f;
 
-    // Use this for initialization
     void Start() {
         bars = new LayoutElement[HandPoseRBF.validPoseNames.Length];
         for (int i = 0; i < bars.Length; i++)
@@ -28,22 +27,14 @@ public class RBFMonitor : MonoBehaviour {
             //label.GetComponent<Text>().text = HandPoseRBF.GetPoseName((HandPoseRBF.PoseType)i);
             bars[i] = barLayout;
         }
-
-        hand.onPoseChanged += Hand_onPoseChanged;
     }
 
-    private void Hand_onPoseChanged(HandPoseRBF.PoseType pose)
-    {
+
+    void Update () {
         double[] rawPoseData = hand.GetRawPose();
-        for(int i = 0; i < rawPoseData.Length; i++)
+        for (int i = 0; i < rawPoseData.Length; i++)
         {
             bars[i].minHeight = (float)rawPoseData[i] * maxHeight;
         }
     }
-
-
-    // Update is called once per frame
-    void Update () {
-	
-	}
 }

@@ -12,6 +12,5 @@ namespace LeapInteractions
         bool IsGrabbed {get; }
         bool IsCloneable { get; }
         bool IsHovered { get; }
-        bool rotateQuickly { get; }
     }
 }
