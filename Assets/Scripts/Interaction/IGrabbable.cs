@@ -3,14 +3,20 @@ using System.Collections;
 
 namespace LeapInteractions
 {
+    public enum GrabStatus { RELEASED = 0, GRABBED };
+    public delegate void GrabStatusChanged(GrabStatus status);
+
     public interface IGrabbable
     {
-        void OnGrab();
-        void OnRelease();
-        void OnStartHover();
-        void OnStopHover();
-        bool IsGrabbed {get; }
+        GrabStatus Grab { get; set; }
+        event GrabStatusChanged onGrabStatusChanged;
+        void AddGrabPoint(Transform grabPoint);
+        void StartGrab();
+        void UpdateGrab();
+        void EndGrab();
+        bool IsGrabbed { get; }
+
+        GameObject Clone();
         bool IsCloneable { get; }
-        bool IsHovered { get; }
     }
 }

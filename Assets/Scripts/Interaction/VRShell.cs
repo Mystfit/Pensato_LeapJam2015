@@ -7,24 +7,60 @@ using LMWidgets;
 public class VRShell : MonoBehaviour, IZoomable, IGrabbable
 {
     /*
-    *  Grabbing
-    */
-    private bool _isHovered;
-    public bool IsHovered { get { return false; } }
-    public void OnStartHover() { }
-    public void OnStopHover() { }
-   
-    private bool _isGrabbed;
-    public bool IsGrabbed { get { return _isGrabbed; } }
-    public void OnGrab() { }
-    public void OnRelease() { }
-
-    /*
     *  Shell 
     */
     public enum ShellStates { COLLAPSED = 0, INTERACTABLE, LARGE };
     private ShellStates _shellStatus;
-    public ShellStates ShellState { get { return _shellStatus; } set { _shellStatus = value; } }
+    public ShellStates ShellState {
+        get { return _shellStatus; }
+        set {
+            Debug.Log("Shell status changing to: " + Enum.GetName(typeof(ShellStates), value));
+            _shellStatus = value;
+            if (onShellStateChanged != null) onShellStateChanged(_shellStatus);
+        }
+    }
+    public delegate void ShellStateChanged(ShellStates state);
+    public event ShellStateChanged onShellStateChanged;
+
+    public float minimizedShellScale = 0.06f;
+    public float interactableShellScale = 0.3f;
+    public float largeShellScale = 2.0f;
+
+    /*
+    *  Grabbing
+    */
+    private bool _isGrabbed;
+    public bool IsGrabbed { get { return _isGrabbed; } }
+
+    public void AddGrabPoint(Transform grabPoint)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void StartGrab()
+    {
+        throw new NotImplementedException();
+    }
+
+
+    public void UpdateGrab()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void EndGrab()
+    {
+        throw new NotImplementedException();
+    }
+
+    private bool _isCloneable;
+    public bool IsCloneable { get { return _isCloneable; } }
+    
+    public GameObject Clone()
+    {
+        throw new NotImplementedException();
+    }
+
 
     /*
     *  Zoom
@@ -33,12 +69,36 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     public bool IsZoomable { get { return _isZoomable; } }
     private ZoomStatus _zoomstatus;
     public ZoomStatus Zoom { get { return _zoomstatus; } set { _zoomstatus = value; } }
-    public void OnStartZoom(){ }
-    public void ContinueZoom(Vector3 firstAttachPoint, Vector3 secondAttachPoint){ }
-    public void OnStopZoom(){ }
-    public bool IsCloneable { get { return false; } }
+    public void StartZoom()
+    {
+        throw new NotImplementedException();
+    }
 
-    //Compressor buttons - Used for collapsing the shell down a level / moving to another shell on the same level
+    public void UpdateZoom()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void StopZoom()
+    {
+        throw new NotImplementedException();
+    }
+
+    private Transform _attachpoints;
+    public void AddAttachPoint(Transform attachpoint)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void RemoveAttachPoint(Transform attachpoint)
+    {
+        throw new NotImplementedException();
+    }
+
+
+    /*
+     * Compressors - Used for collapsing the shell down a level / moving to another shell on the same level
+     */
     public ButtonBase leftCompressorBtn;
     public ButtonBase rightCompressorBtn;
     
@@ -46,15 +106,9 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     public ButtonBase GetCompressorButton(CompressorBtnSide side) { return (side == CompressorBtnSide.LEFT) ? leftCompressorBtn : rightCompressorBtn; }
     protected enum CompressorHeldStatus { NONE = 0, SINGLE, BOTH };
     protected CompressorHeldStatus _compressorHeldStatus;
-    protected ButtonBase _heldCompressor;
 
-
-    void Start () {
-        leftCompressorBtn.StartHandler += compressorButtonPressed;
-        rightCompressorBtn.StartHandler += compressorButtonPressed;
-        leftCompressorBtn.EndHandler += compressorButtonReleased;
-        rightCompressorBtn.EndHandler += compressorButtonReleased;
-    }
+    public event ZoomStatusChanged onZoomStatusChanged;
+    public event GrabStatusChanged onGrabStatusChanged;
 
     private void compressorButtonPressed(object sender, EventArg<bool> e)
     {
@@ -62,24 +116,58 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         if (ShellState == ShellStates.INTERACTABLE)
         {
             ButtonBase btn = (ButtonBase)sender;
-            if (_heldCompressor == null)
+            if (BothCompressorsHeld)
             {
-                _heldCompressor = btn;
-                _heldCompressor = null;
+                //Collapse shell down a level
+                Debug.Log("Collapsing shell");
+                ShellState = ShellStates.COLLAPSED;
+            }
+            else if(BothCompressorsTouched)
+            {
+                //Wait for other hand to leave compressor
+                Debug.Log("Waiting for full compression");
             }
             else
             {
-                //Collapse shell down a level
+                //Swipe to next shell in this subshell
+                Debug.Log("Swiping shell");
             }
         }
     }
 
     private void compressorButtonReleased(object sender, EventArg<bool> e)
     {
-        _heldCompressor = null;
+    }
+
+    bool BothCompressorsTouched { get { return (leftCompressorBtn.GetFraction() > 0.0f && rightCompressorBtn.GetFraction() > 0.0f); } }
+    bool BothCompressorsHeld { get { return (leftCompressorBtn.GetFraction() >= 1.0f && rightCompressorBtn.GetFraction() >= 1.0f); } }
+
+    public GrabStatus Grab
+    {
+        get
+        {
+            throw new NotImplementedException();
+        }
+
+        set
+        {
+            throw new NotImplementedException();
+        }
     }
 
 
+    /*
+     * Unity
+     */
+    void Start()
+    {
+        ShellState = ShellStates.INTERACTABLE;
+
+        leftCompressorBtn.StartHandler += compressorButtonPressed;
+        rightCompressorBtn.StartHandler += compressorButtonPressed;
+        leftCompressorBtn.EndHandler += compressorButtonReleased;
+        rightCompressorBtn.EndHandler += compressorButtonReleased;
+    }
 
     void Update () {
 
@@ -107,7 +195,4 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
                 break;
         }
 	}
-
-    bool BothCompressorsTouched { get { return (leftCompressorBtn.GetFraction() > 0.0f && rightCompressorBtn.GetFraction() > 0.0f); } }
-    bool BothCompressorsHeld { get { return (leftCompressorBtn.GetFraction() >= 1.0f && rightCompressorBtn.GetFraction() >= 1.0f); } }
 }

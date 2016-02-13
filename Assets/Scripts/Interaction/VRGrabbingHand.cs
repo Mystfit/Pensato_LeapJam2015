@@ -128,19 +128,19 @@ public class VRGrabbingHand : MonoBehaviour
 
         if (hover != active_object_ && active_object_ != null)
         {
-            IGrabbable old_grabbable = active_object_.GetComponent<IGrabbable>();
+            IHoverable old_grabbable = active_object_.GetComponent<IHoverable>();
 
             if (old_grabbable != null)
-                old_grabbable.OnStopHover();
+                old_grabbable.StopHover();
         }
 
         if (hover != null)
         {
-            IGrabbable new_grabbable = hover.GetComponent<IGrabbable>();
+            IHoverable new_grabbable = hover.GetComponent<IHoverable>();
 
             if (new_grabbable != null)
             {
-                new_grabbable.OnStartHover();
+                new_grabbable.StartHover();
             }
         }
 
@@ -158,7 +158,7 @@ public class VRGrabbingHand : MonoBehaviour
 
         if (grabbable.IsCloneable)
         {
-            GameObject clone = grabbable.clone();
+            GameObject clone = grabbable.Clone();
             grabbable = clone.GetComponent<VRGrabbable>();
             grabbable.IsCloneable = false;
 
@@ -208,7 +208,8 @@ public class VRGrabbingHand : MonoBehaviour
         if (grabbable != null)
         {
             // Notify grabbable object that it was grabbed.
-            grabbable.OnGrab();
+            //grabbable.AddGrabPoint();
+            grabbable.StartGrab();
 
             if (grabbable.useAxisAlignment)
             {
@@ -235,7 +236,7 @@ public class VRGrabbingHand : MonoBehaviour
             // Notify the grabbable object that is was released.
             VRGrabbable grabbable = active_object_.GetComponent<VRGrabbable>();
             if (grabbable != null)
-                grabbable.OnRelease();
+                grabbable.EndGrab();
 
             if (grabbable == null || grabbable.rotateQuickly)
                 active_object_.GetComponent<Rigidbody>().maxAngularVelocity = last_max_angular_velocity_;

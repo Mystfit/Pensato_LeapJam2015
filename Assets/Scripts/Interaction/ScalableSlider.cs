@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using LeapInteractions;
+
 using System.Collections;
 
 public class ScalableSlider : VRGrabbable {
@@ -12,7 +14,7 @@ public class ScalableSlider : VRGrabbable {
         IsCloneable = true;
     }
 
-    public override  GameObject clone()
+    public override GameObject Clone()
     {
         if (m_dragGraphics == null) return null;
         GameObject clone = GameObject.Instantiate(m_dragGraphics);

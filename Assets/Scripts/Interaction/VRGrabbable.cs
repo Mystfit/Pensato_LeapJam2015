@@ -11,16 +11,75 @@ using System.Collections;
 
 public class VRGrabbable : MonoBehaviour, IGrabbable
 {
-    public bool toggleCloneable;
-
     void Awake()
     {
     }
 
-    private bool m_cloneable;
-    public bool IsCloneable { get { return m_cloneable; } set { m_cloneable = value; } }
+    public bool useAxisAlignment = false;
+    public Vector3 rightHandAxis;
+    public Vector3 objectAxis;
 
-    public virtual GameObject clone()
+    private bool _rotateQuickly = true;
+    public bool rotateQuickly{get { return _rotateQuickly; }}
+    public bool centerGrabbedObject = false;
+
+    public Rigidbody breakableJoint;
+    public float breakForce;
+    public float breakTorque;
+
+
+    private GrabStatus _grabStatus;
+    public GrabStatus Grab { get { return _grabStatus; } set { _grabStatus = value; } }
+    public bool IsGrabbed { get { return (_grabStatus == GrabStatus.GRABBED); } }
+    public event GrabStatusChanged onGrabStatusChanged;
+
+    Transform _grabpoint;
+    public void AddGrabPoint(Transform grabpoint)
+    {
+        _grabpoint = grabpoint;
+    }
+
+    public void StartGrab()
+    {
+        Grab = GrabStatus.GRABBED;
+
+        transform.SetParent(null);
+
+        if (breakableJoint != null)
+        {
+            Joint breakJoint = breakableJoint.GetComponent<Joint>();
+            if (breakJoint != null)
+            {
+                breakJoint.breakForce = breakForce;
+                breakJoint.breakTorque = breakTorque;
+            }
+        }
+    }
+
+    public void UpdateGrab()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void EndGrab()
+    {
+        Grab = GrabStatus.RELEASED;
+
+        if (breakableJoint != null)
+        {
+            Joint breakJoint = breakableJoint.GetComponent<Joint>();
+            if (breakJoint != null)
+            {
+                breakJoint.breakForce = Mathf.Infinity;
+                breakJoint.breakTorque = Mathf.Infinity;
+            }
+        }
+    }
+
+
+    private bool _cloneable;
+    public bool IsCloneable { get { return _cloneable; } set { _cloneable = value; } }
+    public virtual GameObject Clone()
     {
         if (!IsCloneable) return null;
         GameObject clone = null;
@@ -36,77 +95,5 @@ public class VRGrabbable : MonoBehaviour, IGrabbable
         }
 
         return clone;
-    }
-
-    public bool useAxisAlignment = false;
-    public Vector3 rightHandAxis;
-    public Vector3 objectAxis;
-
-    private bool m_rotateQuickly = true;
-    public bool rotateQuickly{get { return m_rotateQuickly; }}
-    public bool centerGrabbedObject = false;
-
-    public Rigidbody breakableJoint;
-    public float breakForce;
-    public float breakTorque;
-
-    protected bool grabbed_ = false;
-    protected bool hovered_ = false;
-    public bool IsHovered()
-    {
-        return hovered_;
-    }
-
-    public bool IsGrabbed { get { return grabbed_; } }
-
-    public virtual void OnStartHover()
-    {
-        hovered_ = true;
-    }
-
-    public virtual void OnStopHover()
-    {
-        hovered_ = false;
-    }
-
-    public virtual void OnGrab()
-    {
-        grabbed_ = true;
-        hovered_ = false;
-        transform.SetParent(null);
-
-        if (breakableJoint != null)
-        {
-            Joint breakJoint = breakableJoint.GetComponent<Joint>();
-            if (breakJoint != null)
-            {
-                breakJoint.breakForce = breakForce;
-                breakJoint.breakTorque = breakTorque;
-            }
-        }
-    }
-
-    public virtual void OnRelease()
-    {
-        grabbed_ = false;
-
-        if (breakableJoint != null)
-        {
-            Joint breakJoint = breakableJoint.GetComponent<Joint>();
-            if (breakJoint != null)
-            {
-                breakJoint.breakForce = Mathf.Infinity;
-                breakJoint.breakTorque = Mathf.Infinity;
-            }
-        }
-    }
-
-    bool IGrabbable.IsCloneable { get { return false; } }
-    bool IGrabbable.IsHovered
-    {
-        get
-        {
-            throw new NotImplementedException();
-        }
     }
 }
