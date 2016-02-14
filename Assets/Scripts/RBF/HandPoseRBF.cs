@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using RBF;
 using System.Linq;
+using System.IO;
 using System;
 
 namespace HandPoses
@@ -54,6 +55,7 @@ namespace HandPoses
 
         //Leap handmodel
         public enum Hand { LEFT = 0, RIGHT };
+        public Hand hand;
         protected HandModel m_handModel;
         public HandModel handModel { set { m_handModel = value; } get { return m_handModel; } }
 
@@ -62,7 +64,7 @@ namespace HandPoses
         public RBFCore RBF { get { return m_rbf; } }
         public double m_sigma = 0.5;
         public string trainingFilePath = "";
-        public bool m_loadRbfFromFile = false;
+        public bool autoload = false;
 
         //Dirty states
         private bool m_isDirty = true;
@@ -100,7 +102,7 @@ namespace HandPoses
             m_lastPoseOutput = new double[validPoseNames.Length];
             CreateTrainingBuffer();
 
-            if (m_loadRbfFromFile)
+            if (autoload)
                 LoadRBF();
         }
 
@@ -155,7 +157,29 @@ namespace HandPoses
         /// <returns>Load successful</returns>
         public bool LoadRBF()
         {
-            return LoadRBF(trainingFilePath);
+            return LoadLatestRBF(trainingFilePath, hand);
+        }
+
+        public bool LoadLatestRBF(string trainingDataPath, HandPoseRBF.Hand hand)
+        {
+            string[] files = Directory.GetFiles(trainingDataPath);
+
+            string handname = Enum.GetName(typeof(HandPoseRBF.Hand), hand).ToLower();
+            string[] rbfTrainingFilenames = Array.FindAll(files, s => Path.GetFileName(s).StartsWith(handname));
+
+            if (rbfTrainingFilenames.Length == 0)
+            {
+                Debug.LogWarning(string.Format("No RBF training data found for {0} hand", handname));
+                return false;
+            }
+
+            //Linq descending sort
+            var rbfTrainingFilenamesDesc = from s in rbfTrainingFilenames
+                                            orderby s descending
+                                            select s;
+
+            string latestRbfFile = rbfTrainingFilenamesDesc.First();
+            return LoadRBF(latestRbfFile);
         }
 
 
@@ -288,10 +312,13 @@ namespace HandPoses
             if (m_currentPose != m_lastPose)
             {
                 m_activePose = m_currentPose;
-                onPoseChanged(m_activePose);
+                if(onPoseChanged != null) onPoseChanged(m_activePose);
 
                 if (GetPoseCategory(m_lastPose) != GetPoseCategory(m_activePose))
-                    if(onPoseCategoryChanged != null) onPoseCategoryChanged(GetPoseCategory(m_activePose));
+                {
+                    if (onPoseCategoryChanged != null) onPoseCategoryChanged(GetPoseCategory(m_activePose));
+                    Debug.Log(String.Format("{0} hand pose: {1}" , hand, GetPoseCategory(m_activePose)));
+                }
 
                 if (m_activePose != m_lastPoseDown)
                 {

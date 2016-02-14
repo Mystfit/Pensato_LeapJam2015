@@ -12,9 +12,8 @@ namespace LeapInteractions
     /// <summary>
     /// Interface for objects that need to implement zoomable behaviour (two handed pinch)
     /// </summary>
-    public interface IZoomable
+    public interface IZoomable: IInteractable
     {
-
         /// <summary>
         /// Zooming status
         /// </summary>
@@ -26,24 +25,9 @@ namespace LeapInteractions
         event ZoomStatusChanged onZoomStatusChanged;
 
         /// <summary>
-        /// Adds a new attachment point for zooming
-        /// </summary>
-        /// <param name="attachpoint">Transform to track</param>
-        void AddAttachPoint(Transform attachpoint);
-
-
-        /// <summary>
-        /// Removes a zoom attachment point
-        /// </summary>
-        /// <param name="attachpoint">Transform to stop tracking</param>
-        void RemoveAttachPoint(Transform attachpoint);
-
-
-        /// <summary>
         /// Start zooming into object
         /// </summary>
         void StartZoom();
-
 
         /// <summary>
         /// Update zooming object
@@ -56,10 +40,22 @@ namespace LeapInteractions
         /// </summary>
         void StopZoom();
 
+        /// <summary>
+        /// Asks the this Zoomable for a new handle to perform the zoom with
+        /// </summary>
+        /// <returns></returns>
+        IGrabbable CreateZoomHandle();
 
         /// <summary>
-        /// Can this object zoom?
+        /// Destroys a zoomhandle
         /// </summary>
-        bool IsZoomable { get; }
+        /// <returns></returns>
+        void DestroyZoomHandle(IGrabbable handle);
+
+        /// <summary>
+        /// Return all zoom handles this zoomable object owns
+        /// </summary>
+        List<IGrabbable> ZoomHandles { get; }
+
     }
 }

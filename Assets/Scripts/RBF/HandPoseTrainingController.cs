@@ -3,10 +3,10 @@ using UnityEngine.UI;
 using System.Collections;
 using LMWidgets;
 using System.Collections.Generic;
-using System.IO;
 using System;
 using System.Linq;
 using HandPoses;
+using System.IO;
 
 namespace HandPoses
 {
@@ -91,28 +91,8 @@ namespace HandPoses
 
         private void CalibrationLoadButton_StartHandler(object sender, EventArg<bool> e)
         {
-            string[] files = Directory.GetFiles(trainingDataPath);
-
-            for (int hand = 0; hand < Enum.GetNames(typeof(HandPoseRBF.Hand)).Length; hand++)
-            {
-                string handname = Enum.GetName(typeof(HandPoseRBF.Hand), hand).ToLower();
-                string[] rbfTrainingFilenames = Array.FindAll(files, s => Path.GetFileName(s).StartsWith(handname));
-
-                if (rbfTrainingFilenames.Length == 0)
-                {
-                    Debug.LogWarning(string.Format("No RBF training data found for {0} hand", handname));
-                    continue;
-                }
-
-                //Linq descending sort
-                var rbfTrainingFilenamesDesc = from s in rbfTrainingFilenames
-                                               orderby s descending
-                                               select s;
-
-                string latestRbfFile = rbfTrainingFilenamesDesc.First();
-                if ((hand == 0) ? leftHandRBF.LoadRBF(latestRbfFile) : rightHandRBF.LoadRBF(latestRbfFile))
-                    Debug.Log(handname.First().ToString().ToUpper() + handname.Substring(1) + " hand RBF loaded from file");
-            }
+            leftHandRBF.LoadLatestRBF(trainingDataPath, HandPoseRBF.Hand.LEFT);
+            rightHandRBF.LoadLatestRBF(trainingDataPath, HandPoseRBF.Hand.RIGHT);
 
             //UI Updates
             sandbox.gameObject.SetActive(true);

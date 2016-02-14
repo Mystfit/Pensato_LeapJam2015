@@ -123,7 +123,7 @@ public class VRGrabbingHand : MonoBehaviour
     // Notify grabbable objects when they are ready to grab :)
     protected void Hover()
     {
-        Func<IGrabbable, bool> isGrabbable = x => !x.IsGrabbed || x.IsGrabbed;
+        Func<IGrabbable, bool> isGrabbable = x => !x.IsInteracting || x.IsInteracting;
         Collider hover = FindClosestComponent<IGrabbable>(current_pinch_position_, grabObjectDistance, isGrabbable);
 
         if (hover != active_object_ && active_object_ != null)
@@ -209,7 +209,7 @@ public class VRGrabbingHand : MonoBehaviour
         {
             // Notify grabbable object that it was grabbed.
             //grabbable.AddGrabPoint();
-            grabbable.StartGrab();
+            grabbable.StartGrab(null);
 
             if (grabbable.useAxisAlignment)
             {

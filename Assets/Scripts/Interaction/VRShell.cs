@@ -13,20 +13,22 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     public GameObject collapsedShell;
     public GameObject interactableShell;
     public GameObject largeShell;
-    
+
     //Shell sizes
     public float minimizedShellScale = 0.06f;
     public float interactableShellScale = 0.37f;
     public float largeShellScale = 2.0f;
-    public float expansionTrigger = 0.1f;
+    public float zoomThreshold = 0.1f;
     public float compressionTrigger = 0.05f;
 
     //Shell states
     public enum ShellStates { COLLAPSED = 0, INTERACTABLE, LARGE };
     private ShellStates _shellStatus;
-    public ShellStates ShellState {
+    public ShellStates ShellState
+    {
         get { return _shellStatus; }
-        set {
+        set
+        {
             _shellStatus = value;
             if (onShellStateChanged != null) onShellStateChanged(_shellStatus);
         }
@@ -36,7 +38,8 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
 
     public enum ShellTransitions { COLLAPSING = 0, IDLE, EXPANDING };
     private ShellTransitions _shellTransition;
-    public ShellTransitions ShellTransition {
+    public ShellTransitions ShellTransition
+    {
         get { return _shellTransition; }
         set { _shellTransition = value; }
     }
@@ -48,11 +51,13 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
 
     private HashSet<VRShell> _childShells;
     public HashSet<VRShell> children { get { return _childShells; } }
-    public void AddChildShell(VRShell shell) {
+    public void AddChildShell(VRShell shell)
+    {
         _childShells.Add(shell);
         shell.SetParentShell(this);
     }
-    public void RemoveChildShell(VRShell shell) {
+    public void RemoveChildShell(VRShell shell)
+    {
         _childShells.Remove(shell);
         shell.SetParentShell(null);
     }
@@ -78,18 +83,18 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     {
         Collapse();
     }
-    
+
 
 
     /*
     *  Grabbing
     */
-    private bool _isGrabbed;
-    public bool IsGrabbed { get { return _isGrabbed; } }
     private GrabStates _grabStatus;
-    public GrabStates GrabState {
+    public GrabStates GrabState
+    {
         get { return _grabStatus; }
-        set {
+        set
+        {
             _grabStatus = value;
             if (onGrabStatusChanged != null) onGrabStatusChanged(_grabStatus);
         }
@@ -97,84 +102,114 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
 
     public event GrabStatusChanged onGrabStatusChanged;
 
-    public void AddGrabPoint(Transform grabPoint)
-    {
-        throw new NotImplementedException();
-    }
 
-    public void StartGrab()
+    private Transform _grabPoint;
+    public void StartGrab(Transform grabPoint)
     {
-        throw new NotImplementedException();
+        _grabPoint = grabPoint;
+        _isInteracting = true;
     }
 
 
     public void UpdateGrab()
     {
-        throw new NotImplementedException();
+        if (_isInteracting && _grabPoint != null)
+        {
+            transform.position = _grabPoint.position;
+        }
     }
 
     public void EndGrab()
     {
-        throw new NotImplementedException();
+        _grabPoint = null;
+        _isInteracting = false;
     }
 
     private bool _isCloneable;
     public bool IsCloneable { get { return _isCloneable; } }
-    
+
     public GameObject Clone()
     {
         throw new NotImplementedException();
     }
+
+    private bool _isInteractable;
+    public bool IsInteractable { get { return _isInteractable; } }
+
+    private bool _isInteracting;
+    public bool IsInteracting { get { return _isInteracting; } }
 
 
 
     /*
     *  Zoom
     */
-    private bool _isZoomable;
-    public bool IsZoomable { get { return _isZoomable; } }
+    public event ZoomStatusChanged onZoomStatusChanged;
     private ZoomStates _zoomstatus;
     public ZoomStates ZoomState { get { return _zoomstatus; } set { _zoomstatus = value; } }
-    public event ZoomStatusChanged onZoomStatusChanged;
+    public bool IsZooming { get { return (_zoomstatus == ZoomStates.MAX_TO_MIN || _zoomstatus == ZoomStates.MIN_TO_MAX); } }
 
+    public GameObject zoomHandlePrefab;
+    private List<IGrabbable> _zoomHandles;
+    public List<IGrabbable> ZoomHandles { get { return _zoomHandles; } }
+
+    public IGrabbable CreateZoomHandle()
+    {
+        IGrabbable handle = GameObject.Instantiate(zoomHandlePrefab).GetComponent<IGrabbable>();
+        _zoomHandles.Add(handle);
+        return handle;
+    }
+    public void DestroyZoomHandle(IGrabbable handle)
+    {
+        _zoomHandles.Remove(handle);
+    }
+   
     public void StartZoom()
     {
-        throw new NotImplementedException();
+        if (IsInteractable)
+        {
+            _isInteracting = true;
+        }
     }
 
     public void UpdateZoom()
     {
-        throw new NotImplementedException();
+        foreach(ZoomHandle handle in _zoomHandles)
+        {
+            handle.UpdateGrab();
+        }
     }
 
     public void StopZoom()
     {
-        throw new NotImplementedException();
+        if (IsInteracting)
+        {
+            _isInteracting = false;
+        }
     }
 
-    private Transform _attachpoints;
-    public void AddAttachPoint(Transform attachpoint)
+    private void CheckZoomHandles()
     {
-        throw new NotImplementedException();
-    }
+        int handleCount = 0;
+        foreach (ZoomHandle handle in ZoomHandles)
+        {
+            if (Vector3.Distance(handle.transform.position, transform.position) > zoomThreshold)
+                handleCount++;
+        }
 
-    public void RemoveAttachPoint(Transform attachpoint)
-    {
-        throw new NotImplementedException();
+        if (handleCount >= 2)
+            Expand();
     }
 
 
     /*
-     * Compressors/Expanders - Used for moving between shell levels
+     * Compressors - Used for moving down a shell level
      */
     public enum HandleSide { LEFT = 0, RIGHT };
-    public ButtonBase leftCompressorBtn;
-    public ButtonBase rightCompressorBtn;    
-    public ButtonBase GetCompressorButton(HandleSide side) { return (side == HandleSide.LEFT) ? leftCompressorBtn : rightCompressorBtn; }
-
-    public ExpansionHandle leftExpanderHandle;
-    public ExpansionHandle rightExpanderHandle;
-    public ExpansionHandle GetExpansionHandle(HandleSide side) { return (side == HandleSide.LEFT) ? leftExpanderHandle : rightExpanderHandle; }
+    public ButtonBase[] compressorButtons;
+    public ButtonBase GetCompressorButton(HandleSide side) { return compressorButtons[(int)side]; }
+    bool BothCompressorsTouched { get { return (compressorButtons[0].GetFraction() > 0.0f && compressorButtons[1].GetFraction() > 0.0f); } }
+    bool BothCompressorsHeld { get { return (compressorButtons[0].GetFraction() >= 1.0f && compressorButtons[1].GetFraction() >= 1.0f); } }
 
     private void CheckCompressionTriggers()
     {
@@ -188,36 +223,28 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         }
         else
         {
-            if (GetCompressorButton(HandleSide.LEFT).GetFraction() > GetCompressorButton(HandleSide.RIGHT).GetFraction())
+            if (GetCompressorButton(HandleSide.LEFT).GetFraction() >= 1.0f)
                 Swipe(HandleSide.LEFT);
-            else
+            else if (GetCompressorButton(HandleSide.RIGHT).GetFraction() >= 1.0f)
                 Swipe(HandleSide.RIGHT);
         }
     }
 
-    private void CheckExpansionTriggers()
-    {
-        if (Vector3.Distance(leftExpanderHandle.transform.position, transform.position) > expansionTrigger &&
-                   Vector3.Distance(rightExpanderHandle.transform.position, transform.position) > expansionTrigger)
-        {
-            Expand();
-        }
-    }
-
-    bool BothCompressorsTouched { get { return (leftCompressorBtn.GetFraction() > 0.0f && rightCompressorBtn.GetFraction() > 0.0f); } }
-    bool BothCompressorsHeld { get { return (leftCompressorBtn.GetFraction() >= 1.0f && rightCompressorBtn.GetFraction() >= 1.0f); } }
-
     
+
 
     /*
      * Unity
      */
     void Start()
     {
+        _zoomHandles = new List<IGrabbable>();
         Collapse();
+        ZoomState = ZoomStates.MINIMIZED;
     }
 
-    void Update () {
+    void Update()
+    {
 
         //Zoom animation states
         switch (ZoomState)
@@ -225,10 +252,13 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
             case ZoomStates.MINIMIZED:
                 break;
             case ZoomStates.MIN_TO_MAX:
+                if(IsInteracting)
+                    UpdateZoom();
                 break;
             case ZoomStates.MAXIMIZED:
                 break;
             case ZoomStates.MAX_TO_MIN:
+                UpdateZoom();
                 break;
         }
 
@@ -236,7 +266,9 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         switch (ShellState)
         {
             case ShellStates.COLLAPSED:
-                CheckExpansionTriggers();
+                if(IsInteracting)
+                    UpdateGrab();
+                CheckZoomHandles();
                 break;
             case ShellStates.INTERACTABLE:
                 CheckCompressionTriggers();
@@ -244,5 +276,5 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
             case ShellStates.LARGE:
                 break;
         }
-	}
+    }
 }

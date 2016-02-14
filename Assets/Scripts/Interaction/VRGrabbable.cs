@@ -39,7 +39,7 @@ public class VRGrabbable : MonoBehaviour, IGrabbable
         _grabpoint = grabpoint;
     }
 
-    public void StartGrab()
+    public void StartGrab(Transform grabPoint)
     {
         GrabState = GrabStates.GRABBED;
 
@@ -79,6 +79,12 @@ public class VRGrabbable : MonoBehaviour, IGrabbable
 
     private bool _cloneable;
     public bool IsCloneable { get { return _cloneable; } set { _cloneable = value; } }
+
+    private bool _isInteractable;
+    public bool IsInteractable { get { return _isInteractable; } }
+    private bool _isInteracting;
+    public bool IsInteracting { get { return _isInteracting; } }
+
     public virtual GameObject Clone()
     {
         if (!IsCloneable) return null;

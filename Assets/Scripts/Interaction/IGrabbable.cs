@@ -6,15 +6,13 @@ namespace LeapInteractions
     public enum GrabStates { RELEASED = 0, GRABBED };
     public delegate void GrabStatusChanged(GrabStates status);
 
-    public interface IGrabbable
+    public interface IGrabbable: IInteractable
     {
         GrabStates GrabState { get; set; }
         event GrabStatusChanged onGrabStatusChanged;
-        void AddGrabPoint(Transform grabPoint);
-        void StartGrab();
+        void StartGrab(Transform grabPoint);
         void UpdateGrab();
         void EndGrab();
-        bool IsGrabbed { get; }
 
         GameObject Clone();
         bool IsCloneable { get; }
