@@ -28,9 +28,9 @@ public class VRGrabbable : MonoBehaviour, IGrabbable
     public float breakTorque;
 
 
-    private GrabStatus _grabStatus;
-    public GrabStatus Grab { get { return _grabStatus; } set { _grabStatus = value; } }
-    public bool IsGrabbed { get { return (_grabStatus == GrabStatus.GRABBED); } }
+    private GrabStates _grabStatus;
+    public GrabStates GrabState { get { return _grabStatus; } set { _grabStatus = value; } }
+    public bool IsGrabbed { get { return (_grabStatus == GrabStates.GRABBED); } }
     public event GrabStatusChanged onGrabStatusChanged;
 
     Transform _grabpoint;
@@ -41,7 +41,7 @@ public class VRGrabbable : MonoBehaviour, IGrabbable
 
     public void StartGrab()
     {
-        Grab = GrabStatus.GRABBED;
+        GrabState = GrabStates.GRABBED;
 
         transform.SetParent(null);
 
@@ -63,7 +63,7 @@ public class VRGrabbable : MonoBehaviour, IGrabbable
 
     public void EndGrab()
     {
-        Grab = GrabStatus.RELEASED;
+        GrabState = GrabStates.RELEASED;
 
         if (breakableJoint != null)
         {

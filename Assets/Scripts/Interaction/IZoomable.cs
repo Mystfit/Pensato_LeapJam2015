@@ -6,8 +6,8 @@ using System.Text;
 
 namespace LeapInteractions
 {
-    public enum ZoomStatus { MINIMIZED = 0, MIN_TO_MAX, MAXIMIZED, MAX_TO_MIN };
-    public delegate void ZoomStatusChanged(ZoomStatus status);
+    public enum ZoomStates { MINIMIZED = 0, MIN_TO_MAX, MAXIMIZED, MAX_TO_MIN };
+    public delegate void ZoomStatusChanged(ZoomStates status);
 
     /// <summary>
     /// Interface for objects that need to implement zoomable behaviour (two handed pinch)
@@ -18,7 +18,7 @@ namespace LeapInteractions
         /// <summary>
         /// Zooming status
         /// </summary>
-        ZoomStatus Zoom { get; set; }
+        ZoomStates ZoomState { get; set; }
 
         /// <summary>
         /// Fired when zooming status has changed

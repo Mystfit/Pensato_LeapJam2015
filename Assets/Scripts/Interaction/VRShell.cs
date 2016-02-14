@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using LeapInteractions;
 using System;
 using LMWidgets;
@@ -9,12 +10,23 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     /*
     *  Shell 
     */
+    public GameObject collapsedShell;
+    public GameObject interactableShell;
+    public GameObject largeShell;
+    
+    //Shell sizes
+    public float minimizedShellScale = 0.06f;
+    public float interactableShellScale = 0.37f;
+    public float largeShellScale = 2.0f;
+    public float expansionTrigger = 0.1f;
+    public float compressionTrigger = 0.05f;
+
+    //Shell states
     public enum ShellStates { COLLAPSED = 0, INTERACTABLE, LARGE };
     private ShellStates _shellStatus;
     public ShellStates ShellState {
         get { return _shellStatus; }
         set {
-            Debug.Log("Shell status changing to: " + Enum.GetName(typeof(ShellStates), value));
             _shellStatus = value;
             if (onShellStateChanged != null) onShellStateChanged(_shellStatus);
         }
@@ -22,15 +34,68 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     public delegate void ShellStateChanged(ShellStates state);
     public event ShellStateChanged onShellStateChanged;
 
-    public float minimizedShellScale = 0.06f;
-    public float interactableShellScale = 0.3f;
-    public float largeShellScale = 2.0f;
+    public enum ShellTransitions { COLLAPSING = 0, IDLE, EXPANDING };
+    private ShellTransitions _shellTransition;
+    public ShellTransitions ShellTransition {
+        get { return _shellTransition; }
+        set { _shellTransition = value; }
+    }
+
+    //Shell hierarchy
+    private VRShell _parentShell;
+    public VRShell parent { get { return _parentShell; } }
+    public void SetParentShell(VRShell parent) { _parentShell = parent; }
+
+    private HashSet<VRShell> _childShells;
+    public HashSet<VRShell> children { get { return _childShells; } }
+    public void AddChildShell(VRShell shell) {
+        _childShells.Add(shell);
+        shell.SetParentShell(this);
+    }
+    public void RemoveChildShell(VRShell shell) {
+        _childShells.Remove(shell);
+        shell.SetParentShell(null);
+    }
+
+    //Shell actions
+    public void Expand()
+    {
+        ShellState = ShellStates.INTERACTABLE;
+        largeShell.SetActive(false);
+        interactableShell.SetActive(true);
+        collapsedShell.SetActive(false);
+    }
+
+    public void Collapse()
+    {
+        ShellState = ShellStates.COLLAPSED;
+        largeShell.SetActive(false);
+        interactableShell.SetActive(false);
+        collapsedShell.SetActive(true);
+    }
+
+    public void Swipe(HandleSide fromSide)
+    {
+        Collapse();
+    }
+    
+
 
     /*
     *  Grabbing
     */
     private bool _isGrabbed;
     public bool IsGrabbed { get { return _isGrabbed; } }
+    private GrabStates _grabStatus;
+    public GrabStates GrabState {
+        get { return _grabStatus; }
+        set {
+            _grabStatus = value;
+            if (onGrabStatusChanged != null) onGrabStatusChanged(_grabStatus);
+        }
+    }
+
+    public event GrabStatusChanged onGrabStatusChanged;
 
     public void AddGrabPoint(Transform grabPoint)
     {
@@ -62,13 +127,16 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     }
 
 
+
     /*
     *  Zoom
     */
     private bool _isZoomable;
     public bool IsZoomable { get { return _isZoomable; } }
-    private ZoomStatus _zoomstatus;
-    public ZoomStatus Zoom { get { return _zoomstatus; } set { _zoomstatus = value; } }
+    private ZoomStates _zoomstatus;
+    public ZoomStates ZoomState { get { return _zoomstatus; } set { _zoomstatus = value; } }
+    public event ZoomStatusChanged onZoomStatusChanged;
+
     public void StartZoom()
     {
         throw new NotImplementedException();
@@ -97,90 +165,70 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
 
 
     /*
-     * Compressors - Used for collapsing the shell down a level / moving to another shell on the same level
+     * Compressors/Expanders - Used for moving between shell levels
      */
+    public enum HandleSide { LEFT = 0, RIGHT };
     public ButtonBase leftCompressorBtn;
-    public ButtonBase rightCompressorBtn;
-    
-    public enum CompressorBtnSide { LEFT = 0, RIGHT };
-    public ButtonBase GetCompressorButton(CompressorBtnSide side) { return (side == CompressorBtnSide.LEFT) ? leftCompressorBtn : rightCompressorBtn; }
-    protected enum CompressorHeldStatus { NONE = 0, SINGLE, BOTH };
-    protected CompressorHeldStatus _compressorHeldStatus;
+    public ButtonBase rightCompressorBtn;    
+    public ButtonBase GetCompressorButton(HandleSide side) { return (side == HandleSide.LEFT) ? leftCompressorBtn : rightCompressorBtn; }
 
-    public event ZoomStatusChanged onZoomStatusChanged;
-    public event GrabStatusChanged onGrabStatusChanged;
+    public ExpansionHandle leftExpanderHandle;
+    public ExpansionHandle rightExpanderHandle;
+    public ExpansionHandle GetExpansionHandle(HandleSide side) { return (side == HandleSide.LEFT) ? leftExpanderHandle : rightExpanderHandle; }
 
-    private void compressorButtonPressed(object sender, EventArg<bool> e)
+    private void CheckCompressionTriggers()
     {
-        //Compressor buttons only useable when shell is interactable
-        if (ShellState == ShellStates.INTERACTABLE)
+        if (BothCompressorsHeld)
         {
-            ButtonBase btn = (ButtonBase)sender;
-            if (BothCompressorsHeld)
-            {
-                //Collapse shell down a level
-                Debug.Log("Collapsing shell");
-                ShellState = ShellStates.COLLAPSED;
-            }
-            else if(BothCompressorsTouched)
-            {
-                //Wait for other hand to leave compressor
-                Debug.Log("Waiting for full compression");
-            }
+            Collapse();
+        }
+        else if (BothCompressorsTouched)
+        {
+            //Wait for one hand to be released
+        }
+        else
+        {
+            if (GetCompressorButton(HandleSide.LEFT).GetFraction() > GetCompressorButton(HandleSide.RIGHT).GetFraction())
+                Swipe(HandleSide.LEFT);
             else
-            {
-                //Swipe to next shell in this subshell
-                Debug.Log("Swiping shell");
-            }
+                Swipe(HandleSide.RIGHT);
         }
     }
 
-    private void compressorButtonReleased(object sender, EventArg<bool> e)
+    private void CheckExpansionTriggers()
     {
+        if (Vector3.Distance(leftExpanderHandle.transform.position, transform.position) > expansionTrigger &&
+                   Vector3.Distance(rightExpanderHandle.transform.position, transform.position) > expansionTrigger)
+        {
+            Expand();
+        }
     }
 
     bool BothCompressorsTouched { get { return (leftCompressorBtn.GetFraction() > 0.0f && rightCompressorBtn.GetFraction() > 0.0f); } }
     bool BothCompressorsHeld { get { return (leftCompressorBtn.GetFraction() >= 1.0f && rightCompressorBtn.GetFraction() >= 1.0f); } }
 
-    public GrabStatus Grab
-    {
-        get
-        {
-            throw new NotImplementedException();
-        }
-
-        set
-        {
-            throw new NotImplementedException();
-        }
-    }
-
+    
 
     /*
      * Unity
      */
     void Start()
     {
-        ShellState = ShellStates.INTERACTABLE;
-
-        leftCompressorBtn.StartHandler += compressorButtonPressed;
-        rightCompressorBtn.StartHandler += compressorButtonPressed;
-        leftCompressorBtn.EndHandler += compressorButtonReleased;
-        rightCompressorBtn.EndHandler += compressorButtonReleased;
+        Collapse();
     }
 
     void Update () {
 
         //Zoom animation states
-        switch (Zoom)
+        switch (ZoomState)
         {
-            case ZoomStatus.MINIMIZED:
+            case ZoomStates.MINIMIZED:
                 break;
-            case ZoomStatus.MIN_TO_MAX:
+            case ZoomStates.MIN_TO_MAX:
                 break;
-            case ZoomStatus.MAXIMIZED:
+            case ZoomStates.MAXIMIZED:
                 break;
-            case ZoomStatus.MAX_TO_MIN:
+            case ZoomStates.MAX_TO_MIN:
                 break;
         }
 
@@ -188,8 +236,10 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         switch (ShellState)
         {
             case ShellStates.COLLAPSED:
+                CheckExpansionTriggers();
                 break;
             case ShellStates.INTERACTABLE:
+                CheckCompressionTriggers();
                 break;
             case ShellStates.LARGE:
                 break;
