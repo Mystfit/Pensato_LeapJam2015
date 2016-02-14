@@ -125,13 +125,14 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         _isInteracting = false;
     }
 
-    private bool _isCloneable;
-    public bool IsCloneable { get { return _isCloneable; } }
+    public Vector3 WorldPosition { get { return transform.position; } }
 
     public GameObject Clone()
     {
         throw new NotImplementedException();
     }
+    private bool _isCloneable;
+    public bool IsCloneable { get { return _isCloneable; } }
 
     private bool _isInteractable;
     public bool IsInteractable { get { return _isInteractable; } }
@@ -191,10 +192,16 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     private void CheckZoomHandles()
     {
         int handleCount = 0;
-        foreach (ZoomHandle handle in ZoomHandles)
+        for (int i = ZoomHandles.Count - 1; i >= 0; i--)
         {
-            if (Vector3.Distance(handle.transform.position, transform.position) > zoomThreshold)
-                handleCount++;
+            try
+            {
+                if (Vector3.Distance(ZoomHandles[i].WorldPosition, transform.position) > zoomThreshold)
+                    handleCount++;
+            } catch(MissingReferenceException e)
+            {
+                ZoomHandles.RemoveAt(i);
+            }
         }
 
         if (handleCount >= 2)
@@ -229,7 +236,6 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
                 Swipe(HandleSide.RIGHT);
         }
     }
-
     
 
 

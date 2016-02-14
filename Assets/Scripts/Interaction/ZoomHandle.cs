@@ -44,7 +44,10 @@ public class ZoomHandle : MonoBehaviour, IGrabbable {
     {
         _grabPoint = null;
         _isInteracting = false;
+        Destroy(gameObject);
     }
+
+    public Vector3 WorldPosition { get { return transform.position; } }
 
     private bool _isCloneable;
     public bool IsCloneable { get { return _isCloneable; } }

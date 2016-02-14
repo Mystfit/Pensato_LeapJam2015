@@ -21,10 +21,14 @@ public class RBFMonitor : MonoBehaviour {
             barLayout.minHeight = maxHeight;
             bar.SetParent(transform, false);
             bar.transform.localPosition = new Vector3(0.0f, 0.0f, 0.1f);
-            //GameObject label = GameObject.Instantiate(textPrefab);
+            GameObject label = GameObject.Instantiate(textPrefab);
+            label.transform.position = bar.transform.position + new Vector3(0.0f, -0.95f, 0.0f);
+            label.transform.SetParent(bar, false);
+            //label.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            label.transform.localPosition = new Vector3(0.0f, 0.165f, -0.12f);
+
             //label.transform.SetParent(bar, false);
-            //label.transform.localPosition = new Vector3(0.0f, 0.0f, -0.2f);
-            //label.GetComponent<Text>().text = HandPoseRBF.GetPoseName((HandPoseRBF.PoseType)i);
+            label.GetComponent<Text>().text = HandPoseRBF.GetPoseName((HandPoseRBF.PoseType)i);
             bars[i] = barLayout;
         }
     }

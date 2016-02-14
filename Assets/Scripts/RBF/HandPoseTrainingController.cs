@@ -263,6 +263,7 @@ namespace HandPoses
                     {
                         poseTimer.text = "REC";
                         m_calibrationState = CalibrationState.CAPTURING_SAMPLES;
+                        m_currentCalibrationSamples.Clear();
                         poseTimer.color = Color.red;
                     }
                     break;

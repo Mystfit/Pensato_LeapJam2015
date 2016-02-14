@@ -7,6 +7,11 @@ using System.Text;
 namespace LeapInteractions
 {
     public enum ZoomStates { MINIMIZED = 0, MIN_TO_MAX, MAXIMIZED, MAX_TO_MIN };
+
+    /// <summary>
+    /// Event that fires when the property 'ZoomState' changes
+    /// </summary>
+    /// <param name="status">Zoom state</param>
     public delegate void ZoomStatusChanged(ZoomStates status);
 
     /// <summary>
@@ -33,7 +38,6 @@ namespace LeapInteractions
         /// Update zooming object
         /// </summary>
         void UpdateZoom();
-
 
         /// <summary>
         /// Stop zooming object

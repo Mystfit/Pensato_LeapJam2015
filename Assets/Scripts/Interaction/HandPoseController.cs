@@ -8,12 +8,13 @@ using HandPoses;
 public class HandPoseController : MonoBehaviour
 {
     // References
-    public HandController leapController;
+    private HandController leapController;
     public HandPoseRBF lefthandRBF;
     public HandPoseRBF righthandRBF;
 
     void Start()
     {
+        leapController = GetComponent<HandController>();
         leapController.onCreateHand += HandCreated;
         leapController.onDestroyHand += HandDestroyed;
     }

@@ -14,6 +14,7 @@ namespace LeapInteractions
         void UpdateGrab();
         void EndGrab();
 
+        Vector3 WorldPosition { get; }
         GameObject Clone();
         bool IsCloneable { get; }
     }
