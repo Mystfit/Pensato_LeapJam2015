@@ -12,10 +12,10 @@ namespace HandPoses
     {
         // Poses
         public enum PoseType { UNRECOGNIZED = -1, NEUTRAL = 0, GRASP, PINCH_INDEX, PINCH_MID, PINCH_RING, PINCH_PINKY };
-        public enum PoseCategory { NEUTRAL = 0, GRASP, PINCH };
+        public enum PoseCategory { NEUTRAL, GRASP, PINCH, UNRECOGNIZED };
         private static Dictionary<PoseType, PoseCategory> poseCategoryLookup = new Dictionary<PoseType, PoseCategory>()
         {
-            { PoseType.UNRECOGNIZED, PoseCategory.NEUTRAL },
+            { PoseType.UNRECOGNIZED, PoseCategory.UNRECOGNIZED },
             { PoseType.NEUTRAL, PoseCategory.NEUTRAL },
             { PoseType.GRASP, PoseCategory.GRASP },
             { PoseType.PINCH_INDEX, PoseCategory.PINCH },
@@ -57,10 +57,20 @@ namespace HandPoses
         public enum Hand { LEFT = 0, RIGHT };
         public Hand hand;
         protected HandModel m_handModel;
-        public HandModel handModel { set { m_handModel = value; } get { return m_handModel; } }
+        public HandModel handModel {
+            set{
+                if(value == null)
+                {
+                    Debug.Log("Hand model going away");
+                }
+                m_handModel = value;
+            }
+            get { return m_handModel; }
+        }
 
         //RBF
         private RBFCore m_rbf;
+        private int m_numInputComponents = 3;
         public RBFCore RBF { get { return m_rbf; } }
         public double m_sigma = 0.5;
         public string trainingFilePath = "";
@@ -96,7 +106,7 @@ namespace HandPoses
 
         void Start()
         {
-            m_rbf = new RBFCore(5 * FingerModel.NUM_BONES * 4, validPoseNames.Length);
+            m_rbf = new RBFCore(HandModel.NUM_FINGERS * FingerModel.NUM_BONES * m_numInputComponents, validPoseNames.Length);
             m_rbf.setSigma(m_sigma);
             m_poseVelocity = new double[validPoseNames.Length];
             m_lastPoseOutput = new double[validPoseNames.Length];
@@ -115,9 +125,8 @@ namespace HandPoses
         void Update()
         {
             if (handModel != null && isTrained)
-            {
                 InterpolatePoses();
-            }
+
         }
 
         /// <summary>
@@ -209,16 +218,19 @@ namespace HandPoses
         public double[] GetFlatBoneRotations()
         {
             double[] boneRotations = new double[m_rbf.numInputs];
-            int rowLength = m_handModel.fingers.Length * FingerModel.NUM_BONES * 4;
-            for (int finger = 0; finger < m_handModel.fingers.Length; finger++)
-            {
+            for (int finger = 0; finger < HandModel.NUM_FINGERS; finger++)
+            {   
                 for (int bone = 0; bone < FingerModel.NUM_BONES; bone++)
                 {
-                    Quaternion rot = Quaternion.Inverse((bone == 0) ? m_handModel.GetPalmRotation() : m_handModel.fingers[finger].GetBoneRotation(bone - 1)) * m_handModel.fingers[finger].GetBoneRotation(bone);
-                    boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4)] = rot.w;
-                    boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 1] = rot.x;
-                    boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 2] = rot.y;
-                    boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 3] = rot.z;
+                    Vector3 relativeBonePosition = m_handModel.palm.InverseTransformPoint(m_handModel.fingers[finger].GetBoneCenter(bone));
+                    boneRotations[(finger * FingerModel.NUM_BONES * m_numInputComponents) + (bone * m_numInputComponents)] = relativeBonePosition.x;
+                    boneRotations[(finger * FingerModel.NUM_BONES * m_numInputComponents) + (bone * m_numInputComponents) + 1] = relativeBonePosition.y;
+                    boneRotations[(finger * FingerModel.NUM_BONES * m_numInputComponents) + (bone * m_numInputComponents) + 2] = relativeBonePosition.z;
+                    //Quaternion rot = Quaternion.Inverse((bone == 0) ? m_handModel.GetPalmRotation() : m_handModel.fingers[finger].GetBoneRotation(bone - 1)) * m_handModel.fingers[finger].GetBoneRotation(bone);
+                    //boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4)] = rot.w;
+                    //boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 1] = rot.x;
+                    //boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 2] = rot.y;
+                    //boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 3] = rot.z;
                 }
             }
             return boneRotations;
@@ -316,8 +328,8 @@ namespace HandPoses
 
                 if (GetPoseCategory(m_lastPose) != GetPoseCategory(m_activePose))
                 {
-                    if (onPoseCategoryChanged != null) onPoseCategoryChanged(GetPoseCategory(m_activePose));
-                    Debug.Log(String.Format("{0} hand pose: {1}" , hand, GetPoseCategory(m_activePose)));
+                    if (onPoseCategoryChanged != null)
+                        onPoseCategoryChanged(GetPoseCategory(m_activePose));
                 }
 
                 if (m_activePose != m_lastPoseDown)

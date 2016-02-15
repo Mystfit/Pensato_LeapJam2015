@@ -7,12 +7,13 @@ public class RBFMonitor : MonoBehaviour {
 
     public HandPoseRBF hand;
     public GameObject textPrefab;
-
+    private Image _background;
     private LayoutElement[] bars;
     public float maxHeight = 1.0f;
 
     void Start() {
         bars = new LayoutElement[HandPoseRBF.validPoseNames.Length];
+        _background = GetComponent<Image>();
         for (int i = 0; i < bars.Length; i++)
         {
             RectTransform bar = new GameObject("bar").AddComponent<RectTransform>();
@@ -35,10 +36,14 @@ public class RBFMonitor : MonoBehaviour {
 
 
     void Update () {
+
+        if (hand.handModel != null)
+            _background.color = Color.blue * new Color(1.0f, 1.0f, 1.0f, 0.5f);
+        else
+            _background.color = Color.red * new Color(1.0f, 1.0f, 1.0f, 0.5f);
+
         double[] rawPoseData = hand.GetRawPose();
         for (int i = 0; i < rawPoseData.Length; i++)
-        {
             bars[i].minHeight = (float)rawPoseData[i] * maxHeight;
-        }
     }
 }

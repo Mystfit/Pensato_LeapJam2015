@@ -61,5 +61,10 @@ namespace LeapInteractions
         /// </summary>
         List<IGrabbable> ZoomHandles { get; }
 
+
+        /// <summary>
+        /// Object is currently zooming
+        /// </summary>
+        bool IsZooming { get; set; }
     }
 }

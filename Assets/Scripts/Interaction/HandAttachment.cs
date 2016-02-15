@@ -3,10 +3,11 @@ using System.Collections;
 using HandPoses;
 using LeapInteractions;
 
-public class HandAttachment : MonoBehaviour {
+public class HandAttachment : MonoBehaviour
+{
 
     HandPoseRBF handRBF;
-    HandPoseRBF.PoseCategory _lastPose;
+    HandPoseRBF.PoseCategory _lastPose = HandPoseRBF.PoseCategory.NEUTRAL;
 
     // Layers that we can grab.
     public LayerMask grabbableLayers = ~0;
@@ -14,7 +15,6 @@ public class HandAttachment : MonoBehaviour {
     // Maximum distance of an object that we can grab when pinching.
     public float grabObjectDistance = 0.05f;
     public float pinchObjectDistance = 0.07f;
-
 
     protected IGrabbable _attachedGrabbable;
     protected GameObject _grabPoint;
@@ -55,9 +55,9 @@ public class HandAttachment : MonoBehaviour {
             }
         }
 
-        if(closestCollider != null)
+        if (closestCollider != null)
             closestInteractable = closestCollider.GetComponent<T>();
- 
+
         return closestInteractable;
     }
 
@@ -69,31 +69,36 @@ public class HandAttachment : MonoBehaviour {
         switch (pose)
         {
             case HandPoseRBF.PoseCategory.NEUTRAL:
-                if(_attachedGrabbable != null)
+                if (_attachedGrabbable != null)
                 {
                     //Release grabbed object
-                    _attachedGrabbable.EndGrab();
-                    _attachedGrabbable = null;
+                    try
+                    {
+                        _attachedGrabbable.EndGrab();
+                        _attachedGrabbable = null;
+                    }
+                    catch (MissingReferenceException e)
+                    {
+                        Debug.LogWarning("Grabbed object missing! Can't remove.");
+                    }
+                    DestroyGrabPoint();
                 }
-                if (_grabPoint != null)
-                {
-                    Destroy(_grabPoint);
-                    _grabPoint = null;
-                }
+                _lastPose = pose;
                 break;
             case HandPoseRBF.PoseCategory.GRASP:
-                if(_lastPose == HandPoseRBF.PoseCategory.NEUTRAL)
+                if (_lastPose == HandPoseRBF.PoseCategory.NEUTRAL)
                 {
                     UpdateGrabPoint();
                     IGrabbable closestGrabbable = (IGrabbable)FindClosestInteractableObject<IGrabbable>(_grabPoint.transform.position, grabObjectDistance);
-                    if (closestGrabbable != null) {
+                    if (closestGrabbable != null)
+                    {
                         _attachedGrabbable = closestGrabbable;
                         _attachedGrabbable.StartGrab(_grabPoint.transform);
-                        
+
                         Debug.Log(string.Format("{0} grabbing {1}", handRBF.hand, _attachedGrabbable));
                     }
+                    _lastPose = pose;
                 }
-
                 break;
             case HandPoseRBF.PoseCategory.PINCH:
                 if (_lastPose == HandPoseRBF.PoseCategory.NEUTRAL)
@@ -107,15 +112,15 @@ public class HandAttachment : MonoBehaviour {
                         _attachedGrabbable.StartGrab(_grabPoint.transform);
                         Debug.Log(string.Format("{0} zooming handle {1}", handRBF.hand, _attachedGrabbable));
                     }
+                    _lastPose = pose;
                 }
                 break;
         }
-        _lastPose = pose;
     }
 
     private void UpdateGrabPoint()
     {
-        if(_grabPoint == null && handRBF.handModel != null)
+        if (_grabPoint == null && handRBF.handModel != null)
         {
             _grabPoint = new GameObject("grabpoint");
             _grabPoint.transform.localPosition = Vector3.zero;
@@ -133,26 +138,21 @@ public class HandAttachment : MonoBehaviour {
             }
             else if (HandPoseRBF.GetPoseCategory(handRBF.activePose) == HandPoseRBF.PoseCategory.PINCH)
             {
-                //Pinch position is calculated as lerped between each finger pose position.
-                double[] poseStrengths = handRBF.GetRawPose();
-                float smallest = 1.0f;
-                float largest = 0.0f;
-                for (int i = 0; i < poseStrengths.Length; i++)
-                {
-                    largest = Mathf.Max(Utils.MathTools.Clamp((float)poseStrengths[i], 0.0f, 1.0f), largest);
-                    smallest = Mathf.Min(Utils.MathTools.Clamp((float)poseStrengths[i], 0.0f, 1.0f), smallest);
-                }
+                FingerModel finger = null;
+                if (handRBF.activePose == HandPoseRBF.PoseType.PINCH_INDEX)
+                    finger = handRBF.handModel.fingers[1];
+                else if (handRBF.activePose == HandPoseRBF.PoseType.PINCH_MID)
+                    finger = handRBF.handModel.fingers[2];
+                else if (handRBF.activePose == HandPoseRBF.PoseType.PINCH_RING)
+                    finger = handRBF.handModel.fingers[3];
+                else if (handRBF.activePose == HandPoseRBF.PoseType.PINCH_PINKY)
+                    finger = handRBF.handModel.fingers[4];
 
-                Vector3[] pinchPositions = new Vector3[HandModel.NUM_FINGERS];
-                for (int i = 1; i < HandModel.NUM_FINGERS; i++)
-                {
-                    pinchPositions[i] = Vector3.Lerp(handRBF.handModel.fingers[0].GetTipPosition(), handRBF.handModel.fingers[i].GetTipPosition(), 0.5f);
-                    total += pinchPositions[i];// * Utils.MathTools.Remap((float)poseStrengths[i], smallest, largest, 0.0f, 1.0f);
-                }
-                _grabPoint.transform.position = total / 4;
+                _grabPoint.transform.position = Vector3.Lerp(finger.GetTipPosition(), handRBF.handModel.fingers[0].GetTipPosition(), 0.5f);
             }
         }
     }
+
 
     void OnDrawGizmos()
     {
@@ -160,18 +160,36 @@ public class HandAttachment : MonoBehaviour {
             Gizmos.color = Color.red;
         else
             Gizmos.color = Color.white;
-        
-        if(_grabPoint != null)
+
+        if (_grabPoint != null)
         {
-            if(_lastPose == HandPoseRBF.PoseCategory.GRASP)
+            if (_lastPose == HandPoseRBF.PoseCategory.GRASP)
                 Gizmos.DrawWireSphere(_grabPoint.transform.position, grabObjectDistance);
-            else if(_lastPose == HandPoseRBF.PoseCategory.PINCH)
+            else if (_lastPose == HandPoseRBF.PoseCategory.PINCH)
                 Gizmos.DrawWireSphere(_grabPoint.transform.position, pinchObjectDistance);
-        }  
+        }
+    }
+
+    void DestroyGrabPoint()
+    {
+        if (_grabPoint != null)
+        {
+            Destroy(_grabPoint);
+            _grabPoint = null;
+        }
     }
 
     void Update()
     {
-        if(_grabPoint != null) UpdateGrabPoint();
+        if (_grabPoint != null)
+        {
+            if (handRBF.handModel == null ||
+               _lastPose == HandPoseRBF.PoseCategory.NEUTRAL ||
+               _lastPose == HandPoseRBF.PoseCategory.UNRECOGNIZED
+               )
+                DestroyGrabPoint();
+            else
+                UpdateGrabPoint();
+        }
     }
 }

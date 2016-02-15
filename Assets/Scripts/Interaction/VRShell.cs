@@ -12,36 +12,38 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     */
     public GameObject collapsedShell;
     public GameObject interactableShell;
-    public GameObject largeShell;
+    public GameObject distantShell;
 
     //Shell sizes
-    public float minimizedShellScale = 0.06f;
-    public float interactableShellScale = 0.37f;
-    public float largeShellScale = 2.0f;
+    public float collapsedShellRadius = 0.06f;
+    public float interactableShellRadius = 0.37f;
+    public float distantShellRadius = 2.0f;
     public float zoomThreshold = 0.1f;
     public float compressionTrigger = 0.05f;
 
     //Shell states
-    public enum ShellStates { COLLAPSED = 0, INTERACTABLE, LARGE };
-    private ShellStates _shellStatus;
-    public ShellStates ShellState
+    public enum ShellStates
     {
-        get { return _shellStatus; }
-        set
-        {
-            _shellStatus = value;
-            if (onShellStateChanged != null) onShellStateChanged(_shellStatus);
-        }
-    }
+        COLLAPSED = 0,
+        COLLAPSED_EXPANDING,
+        INTERACTABLE_COLLAPSING,
+        INTERACTABLE,
+        INTERACTABLE_EXPANDING,
+        DISTANT_COLLAPSING,
+        DISTANT
+    };
+    private bool _freshlyExpanded = false;
     public delegate void ShellStateChanged(ShellStates state);
     public event ShellStateChanged onShellStateChanged;
-
-    public enum ShellTransitions { COLLAPSING = 0, IDLE, EXPANDING };
-    private ShellTransitions _shellTransition;
-    public ShellTransitions ShellTransition
+    private ShellStates _shellState;
+    public ShellStates ShellState
     {
-        get { return _shellTransition; }
-        set { _shellTransition = value; }
+        get { return _shellState; }
+        set
+        {
+            _shellState = value;
+            if (onShellStateChanged != null) onShellStateChanged(_shellState);
+        }
     }
 
     //Shell hierarchy
@@ -65,24 +67,37 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     //Shell actions
     public void Expand()
     {
-        ShellState = ShellStates.INTERACTABLE;
-        largeShell.SetActive(false);
+        ShellState = ShellStates.COLLAPSED_EXPANDING;
+        distantShell.SetActive(false);
         interactableShell.SetActive(true);
         collapsedShell.SetActive(false);
+        GetComponent<SphereCollider>().radius = interactableShellRadius;
+        ClearZoomHandles();
     }
 
     public void Collapse()
     {
         ShellState = ShellStates.COLLAPSED;
-        largeShell.SetActive(false);
+        distantShell.SetActive(false);
         interactableShell.SetActive(false);
         collapsedShell.SetActive(true);
+        GetComponent<SphereCollider>().radius = collapsedShellRadius;
     }
 
     public void Swipe(HandleSide fromSide)
     {
         Collapse();
     }
+
+    public void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.GetComponent<HandAttachment>() != null)
+        {
+
+        }
+    }
+
+
 
 
 
@@ -106,23 +121,26 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     private Transform _grabPoint;
     public void StartGrab(Transform grabPoint)
     {
-        _grabPoint = grabPoint;
-        _isInteracting = true;
+        if (IsInteractable)
+        {
+            _grabPoint = grabPoint;
+            IsGrabbing = true;
+        }
     }
-
 
     public void UpdateGrab()
     {
         if (_isInteracting && _grabPoint != null)
         {
             transform.position = _grabPoint.position;
+            Debug.Log(transform.position);
         }
     }
 
     public void EndGrab()
     {
         _grabPoint = null;
-        _isInteracting = false;
+        IsGrabbing = false;
     }
 
     public Vector3 WorldPosition { get { return transform.position; } }
@@ -138,7 +156,8 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     public bool IsInteractable { get { return _isInteractable; } }
 
     private bool _isInteracting;
-    public bool IsInteracting { get { return _isInteracting; } }
+    public bool IsInteracting { get {
+            return _isInteracting; } }
 
 
 
@@ -148,7 +167,24 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     public event ZoomStatusChanged onZoomStatusChanged;
     private ZoomStates _zoomstatus;
     public ZoomStates ZoomState { get { return _zoomstatus; } set { _zoomstatus = value; } }
-    public bool IsZooming { get { return (_zoomstatus == ZoomStates.MAX_TO_MIN || _zoomstatus == ZoomStates.MIN_TO_MAX); } }
+
+    private bool _isZooming;
+    public bool IsZooming {
+        get { return _isZooming; }
+        set {
+            _isZooming = value;
+            _isInteracting = value || _isGrabbing;
+        }
+    }
+
+    private bool _isGrabbing;
+    public bool IsGrabbing {
+        get { return _isGrabbing; }
+        set {
+            _isGrabbing = value;
+            _isInteracting = value || _isZooming; ;
+        }
+    }
 
     public GameObject zoomHandlePrefab;
     private List<IGrabbable> _zoomHandles;
@@ -158,24 +194,26 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     {
         IGrabbable handle = GameObject.Instantiate(zoomHandlePrefab).GetComponent<IGrabbable>();
         _zoomHandles.Add(handle);
+        if (_zoomHandles.Count >= 2)
+            StartZoom();
         return handle;
     }
     public void DestroyZoomHandle(IGrabbable handle)
     {
         _zoomHandles.Remove(handle);
     }
-   
+
     public void StartZoom()
     {
         if (IsInteractable)
         {
-            _isInteracting = true;
+            IsZooming = true;
         }
     }
 
     public void UpdateZoom()
     {
-        foreach(ZoomHandle handle in _zoomHandles)
+        foreach (ZoomHandle handle in _zoomHandles)
         {
             handle.UpdateGrab();
         }
@@ -183,22 +221,27 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
 
     public void StopZoom()
     {
-        if (IsInteracting)
-        {
-            _isInteracting = false;
-        }
+        IsZooming = false;
     }
 
     private void CheckZoomHandles()
     {
+        if (_zoomHandles.Count == 0 && IsZooming)
+        {
+            StopZoom();
+            return;
+        }
+
         int handleCount = 0;
         for (int i = ZoomHandles.Count - 1; i >= 0; i--)
         {
             try
             {
-                if (Vector3.Distance(ZoomHandles[i].WorldPosition, transform.position) > zoomThreshold)
+                float dist = Vector3.Distance(ZoomHandles[i].WorldPosition, transform.position);
+                if (dist > zoomThreshold)
                     handleCount++;
-            } catch(MissingReferenceException e)
+            }
+            catch (MissingReferenceException e)
             {
                 ZoomHandles.RemoveAt(i);
             }
@@ -206,6 +249,13 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
 
         if (handleCount >= 2)
             Expand();
+    }
+
+    public void ClearZoomHandles()
+    {
+        foreach (ZoomHandle handle in _zoomHandles)
+            handle.EndGrab();
+        _zoomHandles.Clear();
     }
 
 
@@ -236,7 +286,19 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
                 Swipe(HandleSide.RIGHT);
         }
     }
-    
+
+    private bool CheckHandsInCompressors()
+    {
+        for (HandleSide side = 0; (int)side < 2; side++)
+        {
+            Collider[] colliders = Physics.OverlapSphere(GetCompressorButton(side).transform.position, 0.125f, 1 << 9);
+            if(colliders.Length > 0)
+                return true;
+        }
+        return false;
+    }
+
+
 
 
     /*
@@ -245,6 +307,7 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     void Start()
     {
         _zoomHandles = new List<IGrabbable>();
+        _isInteractable = true;
         Collapse();
         ZoomState = ZoomStates.MINIMIZED;
     }
@@ -253,34 +316,67 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     {
 
         //Zoom animation states
-        switch (ZoomState)
-        {
-            case ZoomStates.MINIMIZED:
-                break;
-            case ZoomStates.MIN_TO_MAX:
-                if(IsInteracting)
-                    UpdateZoom();
-                break;
-            case ZoomStates.MAXIMIZED:
-                break;
-            case ZoomStates.MAX_TO_MIN:
-                UpdateZoom();
-                break;
-        }
+        //switch (ZoomState)
+        //{
+        //    case ZoomStates.MINIMIZED:
+        //        break;
+        //    case ZoomStates.MIN_TO_MAX:
+        //        if(IsInteracting)
+        //            UpdateZoom();
+        //        break;
+        //    case ZoomStates.MAXIMIZED:
+        //        break;
+        //    case ZoomStates.MAX_TO_MIN:
+        //        UpdateZoom();
+        //        break;
+        //}
+
 
         //Active shell level states
         switch (ShellState)
         {
             case ShellStates.COLLAPSED:
-                if(IsInteracting)
+                if (IsInteracting)
+                {
                     UpdateGrab();
-                CheckZoomHandles();
+                    UpdateZoom();
+                    CheckZoomHandles();
+                }
+                break;
+            case ShellStates.COLLAPSED_EXPANDING:
+                //If we're arriving from a collapsed state, ignore compressor actions
+                if (CheckHandsInCompressors())
+                {
+                    GetCompressorButton(HandleSide.LEFT).Interactable = false;
+                    GetCompressorButton(HandleSide.RIGHT).Interactable = false;
+                }
+                else
+                {
+                    GetCompressorButton(HandleSide.LEFT).Interactable = true;
+                    GetCompressorButton(HandleSide.RIGHT).Interactable = true;
+                    _shellState = ShellStates.INTERACTABLE;
+                }
+                break;
+            case ShellStates.INTERACTABLE_COLLAPSING:
                 break;
             case ShellStates.INTERACTABLE:
                 CheckCompressionTriggers();
                 break;
-            case ShellStates.LARGE:
+            case ShellStates.INTERACTABLE_EXPANDING:
                 break;
+            case ShellStates.DISTANT_COLLAPSING:
+                break;
+            case ShellStates.DISTANT:
+                break;
+        }
+    }
+
+    public void OnDrawGizmos()
+    {
+        if (_shellState == ShellStates.COLLAPSED_EXPANDING && CheckHandsInCompressors())
+        {
+            Gizmos.DrawWireSphere(GetCompressorButton(HandleSide.LEFT).transform.position, 0.125f);
+            Gizmos.DrawWireSphere(GetCompressorButton(HandleSide.RIGHT).transform.position, 0.125f);
         }
     }
 }

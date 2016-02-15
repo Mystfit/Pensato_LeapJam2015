@@ -17,5 +17,6 @@ namespace LeapInteractions
         Vector3 WorldPosition { get; }
         GameObject Clone();
         bool IsCloneable { get; }
+        bool IsGrabbing { get; set; }
     }
 }

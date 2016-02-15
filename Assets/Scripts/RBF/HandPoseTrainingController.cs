@@ -124,6 +124,7 @@ namespace HandPoses
             rightHandRBF.isTrained = false;
 
             //UI Updates
+            calibrationSaveButton.transform.parent.gameObject.SetActive(false);
             calibrationStartButton.transform.parent.gameObject.SetActive(false);
             calibrationLoadButton.transform.parent.gameObject.SetActive(false);
             UpdateTrainingTargetsVisible(m_currentTrainingPose);
@@ -274,6 +275,8 @@ namespace HandPoses
                         m_currentPoseTime = poseCountdown;
                         break;
                     }
+
+                    //Save current hand bone rotations
                     m_currentCalibrationSamples.Add(currentTrainingHand.GetFlatBoneRotations());
 
                     //Average sampled values

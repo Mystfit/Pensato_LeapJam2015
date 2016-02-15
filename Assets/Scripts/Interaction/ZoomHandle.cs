@@ -52,6 +52,16 @@ public class ZoomHandle : MonoBehaviour, IGrabbable {
     private bool _isCloneable;
     public bool IsCloneable { get { return _isCloneable; } }
 
+    private bool _isGrabbing;
+    public bool IsGrabbing {
+        get { return _isGrabbing; }
+        set
+        {
+            _isGrabbing = value;
+            _isInteracting = value;
+        }
+    }
+
     private bool _isInteractable;
     public bool IsInteractable { get { return _isInteractable; } }
 
@@ -62,7 +72,6 @@ public class ZoomHandle : MonoBehaviour, IGrabbable {
     {
         throw new NotImplementedException();
     }
-
 
     void Start () {
         _attachSpring = GetComponent<SpringJoint>();
