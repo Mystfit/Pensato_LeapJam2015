@@ -68,6 +68,10 @@ namespace HandPoses
             get { return m_handModel; }
         }
 
+        //Joint tracker HACKY HACK KACK
+        private JointTracker _jointTracker;
+        public bool useJointTracker;
+
         //RBF
         private RBFCore m_rbf;
         private int m_numInputComponents = 3;
@@ -114,6 +118,9 @@ namespace HandPoses
 
             if (autoload)
                 LoadRBF();
+
+            if (useJointTracker)
+                _jointTracker = GetComponent<JointTracker>();
         }
 
         void CreateTrainingBuffer()
@@ -124,6 +131,8 @@ namespace HandPoses
 
         void Update()
         {
+            if (Input.GetKeyDown(KeyCode.B) && handModel.GetLeapHand().IsRight)
+                Debug.Break();
             if (handModel != null && isTrained)
                 InterpolatePoses();
 
@@ -222,15 +231,15 @@ namespace HandPoses
             {   
                 for (int bone = 0; bone < FingerModel.NUM_BONES; bone++)
                 {
-                    Vector3 relativeBonePosition = m_handModel.palm.InverseTransformPoint(m_handModel.fingers[finger].GetBoneCenter(bone));
+                    Vector3 relativeBonePosition = Vector3.zero;
+                    if (useJointTracker)
+                        relativeBonePosition = _jointTracker.GetPalm().InverseTransformPoint(_jointTracker.GetBonePosition(finger, bone));
+                    else 
+                        relativeBonePosition = m_handModel.palm.InverseTransformPoint(m_handModel.fingers[finger].GetBoneCenter(bone));
+
                     boneRotations[(finger * FingerModel.NUM_BONES * m_numInputComponents) + (bone * m_numInputComponents)] = relativeBonePosition.x;
                     boneRotations[(finger * FingerModel.NUM_BONES * m_numInputComponents) + (bone * m_numInputComponents) + 1] = relativeBonePosition.y;
                     boneRotations[(finger * FingerModel.NUM_BONES * m_numInputComponents) + (bone * m_numInputComponents) + 2] = relativeBonePosition.z;
-                    //Quaternion rot = Quaternion.Inverse((bone == 0) ? m_handModel.GetPalmRotation() : m_handModel.fingers[finger].GetBoneRotation(bone - 1)) * m_handModel.fingers[finger].GetBoneRotation(bone);
-                    //boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4)] = rot.w;
-                    //boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 1] = rot.x;
-                    //boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 2] = rot.y;
-                    //boneRotations[(finger * FingerModel.NUM_BONES * 4) + (bone * 4) + 3] = rot.z;
                 }
             }
             return boneRotations;
