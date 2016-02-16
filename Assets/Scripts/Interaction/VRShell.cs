@@ -14,7 +14,7 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     public HexSphere outerShell;
 
     //Shell sizes
-    public float collapsedShellRadius = 0.0155f;
+    public float collapsedShellRadius = 0.016f;
     public float interactableShellRadius = 0.37f;
     public float distantShellRadius = 2.0f;
     public float zoomThreshold = 0.1f;
@@ -77,6 +77,7 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         ShellState = ShellStates.COLLAPSED;
         GetComponent<SphereCollider>().radius = collapsedShellRadius;
         SetCompressorButtonActive(false);
+        outerShell.SetPanelRadius(collapsedShellRadius);
     }
 
     public void Swipe(HandleSide fromSide)
@@ -208,16 +209,31 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
 
     public void UpdateZoom()
     {
+        CheckZoomHandles();
 
-        foreach (ZoomHandle handle in _zoomHandles)
+        if (_zoomHandles.Count == 0 && IsZooming)
         {
-            handle.UpdateGrab();
+            StopZoom();
         }
 
+        //Check if we can expand the shell
+        int handleCount = 0;
+        for (int i = 0; i < _zoomHandles.Count; i++)
+        {
+            _zoomHandles[i].UpdateGrab();
+            float dist = Vector3.Distance(ZoomHandles[i].WorldPosition, transform.position);
+            if (dist > zoomThreshold)
+                handleCount++;
+        }
+
+        //Update hex sphere visuals with zoom handle locations
         if (_zoomHandles.Count > 0)
-            outerShell.UpdateHandles(_zoomHandles.Select(handle => Owner.transform.position).ToArray());
+            outerShell.UpdateHandles(_zoomHandles.Select(handle => handle.Owner.transform.position).ToArray());
         else
             outerShell.SetPanelRadius(outerShell.radius);
+
+        if (handleCount >= 2)
+            Expand();
     }
 
     public void StopZoom()
@@ -227,29 +243,17 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
 
     private void CheckZoomHandles()
     {
-        if (_zoomHandles.Count == 0 && IsZooming)
-        {
-            StopZoom();
-            return;
-        }
-
-        int handleCount = 0;
-        for (int i = ZoomHandles.Count - 1; i >= 0; i--)
+        for (int i = _zoomHandles.Count - 1; i >= 0; i--)
         {
             try
             {
-                float dist = Vector3.Distance(ZoomHandles[i].WorldPosition, transform.position);
-                if (dist > zoomThreshold)
-                    handleCount++;
+                bool active = ZoomHandles[i].Owner.activeSelf;
             }
             catch (MissingReferenceException e)
             {
-                ZoomHandles.RemoveAt(i);
+                _zoomHandles.RemoveAt(i);
             }
         }
-
-        if (handleCount >= 2)
-            Expand();
     }
 
     public void ClearZoomHandles()
@@ -346,7 +350,6 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
                 if (IsInteracting)
                 {
                     UpdateGrab();
-                    CheckZoomHandles();
                     UpdateZoom();
                 }
                 break;

@@ -58,13 +58,7 @@ namespace HandPoses
         public Hand hand;
         protected HandModel m_handModel;
         public HandModel handModel {
-            set{
-                if(value == null)
-                {
-                    Debug.Log("Hand model going away");
-                }
-                m_handModel = value;
-            }
+            set{ m_handModel = value; }
             get { return m_handModel; }
         }
 

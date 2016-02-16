@@ -23,14 +23,11 @@ public class HandModelTracker : MonoBehaviour
     {
         if (hand.GetLeapHand().IsLeft)
         {
-            Debug.Log("LEFT hand created");
-
             lefthandRBF.handModel = hand;
         }
         else
         {
             righthandRBF.handModel = hand;
-            Debug.Log("RIGHT hand created");
         }
     }
 
@@ -38,13 +35,11 @@ public class HandModelTracker : MonoBehaviour
     {
         if (hand.GetLeapHand().IsLeft)
         {
-            Debug.Log("LEFT hand destroyed");
             lefthandRBF.handModel = null;
         }
 
         else
         {
-            Debug.Log("RIGHT hand destroyed");
             righthandRBF.handModel = null;
         }
     }
