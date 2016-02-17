@@ -19,6 +19,7 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     public float distantShellRadius = 2.0f;
     public float zoomThreshold = 0.1f;
     public float compressionTrigger = 0.05f;
+    public float shellTransitionTime = 0.4f;
 
     //Shell states
     public enum ShellStates
@@ -47,7 +48,10 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     //Shell hierarchy
     private VRShell _parentShell;
     public VRShell parent { get { return _parentShell; } }
-    public void SetParentShell(VRShell parent) { _parentShell = parent; }
+    public void SetParentShell(VRShell parent) {
+        transform.SetParent(parent.transform, false);
+        _parentShell = parent;
+    }
 
     private HashSet<VRShell> _childShells;
     public HashSet<VRShell> children { get { return _childShells; } }
@@ -69,7 +73,8 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         GetComponent<SphereCollider>().radius = interactableShellRadius;
         ClearZoomHandles();
         SetCompressorButtonActive(true);
-        outerShell.SetPanelRadius(interactableShellRadius);
+
+        outerShell.Animate(shellTransitionTime, interactableShellRadius);
     }
 
     public void Collapse()
@@ -77,7 +82,7 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         ShellState = ShellStates.COLLAPSED;
         GetComponent<SphereCollider>().radius = collapsedShellRadius;
         SetCompressorButtonActive(false);
-        outerShell.SetPanelRadius(collapsedShellRadius);
+        outerShell.Animate(shellTransitionTime, collapsedShellRadius, true);
     }
 
     public void Swipe(HandleSide fromSide)
@@ -214,6 +219,7 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         if (_zoomHandles.Count == 0 && IsZooming)
         {
             StopZoom();
+            outerShell.Animate(shellTransitionTime, collapsedShellRadius, true);
         }
 
         //Check if we can expand the shell
@@ -227,10 +233,8 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         }
 
         //Update hex sphere visuals with zoom handle locations
-        if (_zoomHandles.Count > 0)
+        if (_zoomHandles.Count > 0 && IsZooming)
             outerShell.UpdateHandles(_zoomHandles.Select(handle => handle.Owner.transform.position).ToArray());
-        else
-            outerShell.SetPanelRadius(outerShell.radius);
 
         if (handleCount >= 2)
             Expand();
@@ -270,8 +274,8 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
     public enum HandleSide { LEFT = 0, RIGHT };
     public ButtonBase[] compressorButtons;
     public ButtonBase GetCompressorButton(HandleSide side) { return compressorButtons[(int)side]; }
-    bool BothCompressorsTouched { get { return (compressorButtons[0].GetFraction() > 0.0f && compressorButtons[1].GetFraction() > 0.0f); } }
-    bool BothCompressorsHeld { get { return (compressorButtons[0].GetFraction() >= 1.0f && compressorButtons[1].GetFraction() >= 1.0f); } }
+    bool BothCompressorsTouched { get { return (compressorButtons[0].GetFraction() > 0.01f && compressorButtons[1].GetFraction() > 0.01f); } }
+    bool BothCompressorsHeld { get { return (compressorButtons[0].GetFraction() >= 0.99f && compressorButtons[1].GetFraction() >= 0.99f); } }
 
     private void SetCompressorButtonActive(bool status)
     {
@@ -291,9 +295,9 @@ public class VRShell : MonoBehaviour, IZoomable, IGrabbable
         }
         else
         {
-            if (GetCompressorButton(HandleSide.LEFT).GetFraction() >= 1.0f)
+            if (GetCompressorButton(HandleSide.LEFT).GetFraction() >= 0.99f)
                 Swipe(HandleSide.LEFT);
-            else if (GetCompressorButton(HandleSide.RIGHT).GetFraction() >= 1.0f)
+            else if (GetCompressorButton(HandleSide.RIGHT).GetFraction() >= 0.99f)
                 Swipe(HandleSide.RIGHT);
         }
     }
