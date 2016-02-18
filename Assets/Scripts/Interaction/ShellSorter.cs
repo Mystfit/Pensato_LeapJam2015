@@ -35,6 +35,7 @@ public class ShellSorter : MonoBehaviour, IShellSorter
         //Add shell to end of group
         shellGroup.Shells.AddLast(shell);
         shellGroup.AttachShell(shell);
+        shellGroup.QueueArrange();
 
         if (onShellGroupContentUpdated != null)
             onShellGroupContentUpdated(shellGroup);

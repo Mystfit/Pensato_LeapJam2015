@@ -61,18 +61,22 @@ namespace ShellUI
 
         public void AddChildShell(VRShell shell)
         {
+            if (_shellSorter == null)
+                _shellSorter = GetComponent<ShellSorter>();
             if (_shellSorter.Add(shell))
                 shell.parent = this;
         }
         public void RemoveChildShell(VRShell shell)
         {
+            if (_shellSorter == null)
+                _shellSorter = GetComponent<ShellSorter>();
             if (_shellSorter.Remove(shell))
                 shell.parent = null;
         }
 
         private void OnContentUpdated(ShellGroup group)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         private void OnGroupCreated(ShellGroup group)
@@ -93,8 +97,9 @@ namespace ShellUI
             GetComponent<SphereCollider>().radius = interactableShellRadius;
             ClearZoomHandles();
             SetCompressorButtonActive(true);
-
             outerShell.Animate(shellTransitionTime, interactableShellRadius);
+            if (parent != null)
+                parent.RepelChildren(this);
         }
 
         public void Collapse()
@@ -103,6 +108,8 @@ namespace ShellUI
             GetComponent<SphereCollider>().radius = collapsedShellRadius;
             SetCompressorButtonActive(false);
             outerShell.Animate(shellTransitionTime, collapsedShellRadius, true);
+            if (parent != null)
+                parent.RestoreChildren(this);
         }
 
         public void Swipe(HandleSide fromSide)
@@ -110,11 +117,50 @@ namespace ShellUI
             Collapse();
         }
 
-        public void OnTriggerExit(Collider other)
-        {
-            if (other.gameObject.GetComponent<HandAttachment>() != null)
-            {
+        private Stack<Vector3> _previousPositions;
+        public void PushPosition(Vector3 position){ _previousPositions.Push(position); }
+        public Vector3 PopPosition(){ return _previousPositions.Pop(); }
 
+        public void RepelChildren(VRShell fromChild)
+        {
+            foreach(ShellGroup group in _shellGroups)
+            {
+                foreach(VRShell shell in group.Shells)
+                {
+                    if (shell != fromChild)
+                    {
+                        shell.PushPosition(shell.transform.position);
+                        Vector3 repelDirection =  shell.transform.position - fromChild.transform.position;
+                        if(Vector3.Distance(shell.transform.position, fromChild.transform.position) < interactableShellRadius)
+                        {
+                            Vector3 repelledPosition = repelDirection.normalized * interactableShellRadius + shell.transform.position;
+                            shell.transform.position = repelledPosition;
+                            LeanTween.move(shell.gameObject, repelledPosition, shellTransitionTime).setEase(LeanTweenType.easeOutQuint);
+                        }
+                    }
+                }
+            }
+            if(parent != null)
+            {
+                parent.RepelChildren(fromChild);
+            }
+        }
+
+        public void RestoreChildren(VRShell fromChild)
+        {
+            foreach (ShellGroup group in _shellGroups)
+            {
+                foreach (VRShell shell in group.Shells)
+                {
+                    if (shell != fromChild)
+                    {
+                        LeanTween.move(shell.gameObject, shell.PopPosition(), shellTransitionTime).setEase(LeanTweenType.easeOutQuint);
+                    }
+                }
+            }
+            if (parent != null)
+            {
+                parent.RestoreChildren(fromChild);
             }
         }
 
@@ -209,16 +255,25 @@ namespace ShellUI
                 _isInteracting = value || _isZooming; ;
             }
         }
-
+        public GameObject zoomLinePrefab;
         public GameObject zoomHandlePrefab;
         private List<IGrabbable> _zoomHandles;
+        private Dictionary<IGrabbable, VolumetricLines.VolumetricLineBehavior> _pinchLines;
+
         public List<IGrabbable> ZoomHandles { get { return _zoomHandles; } }
 
         public IGrabbable CreateZoomHandle()
         {
+
             GameObject handle = GameObject.Instantiate(zoomHandlePrefab);
             IGrabbable grabbable = handle.GetComponent<IGrabbable>();
             _zoomHandles.Add(grabbable);
+
+            GameObject line = GameObject.Instantiate(zoomLinePrefab);
+            line.transform.position = Vector3.zero;
+            VolumetricLines.VolumetricLineBehavior volLine = line.GetComponent<VolumetricLines.VolumetricLineBehavior>();
+            _pinchLines[grabbable] = volLine;
+
             if (_zoomHandles.Count >= 2)
                 StartZoom();
             return grabbable;
@@ -226,7 +281,10 @@ namespace ShellUI
 
         public void DestroyZoomHandle(IGrabbable handle)
         {
-            _zoomHandles.Remove(handle);
+            Destroy(_pinchLines[handle].gameObject);
+            _pinchLines.Remove(handle);
+            Destroy(handle.Owner);
+            //_zoomHandles.Remove(handle);
         }
 
         public void StartZoom()
@@ -251,6 +309,8 @@ namespace ShellUI
             int handleCount = 0;
             for (int i = 0; i < _zoomHandles.Count; i++)
             {
+                _pinchLines[_zoomHandles[i]].StartPos = transform.position;
+                _pinchLines[_zoomHandles[i]].EndPos = _zoomHandles[i].Owner.transform.position;
                 _zoomHandles[i].UpdateGrab();
                 float dist = Vector3.Distance(ZoomHandles[i].WorldPosition, transform.position);
                 if (dist > zoomThreshold)
@@ -287,8 +347,12 @@ namespace ShellUI
 
         public void ClearZoomHandles()
         {
+
             foreach (ZoomHandle handle in _zoomHandles)
+            {
                 handle.EndGrab();
+                DestroyZoomHandle(handle);
+            }
             _zoomHandles.Clear();
         }
 
@@ -342,18 +406,23 @@ namespace ShellUI
         /*
          * Unity
          */
-        void Start()
+        void Awake()
         {
             _isInteractable = true;
             _zoomHandles = new List<IGrabbable>();
+            _pinchLines = new Dictionary<IGrabbable, VolumetricLines.VolumetricLineBehavior>();
             _shellSorter = GetComponent<IShellSorter>();
             _shellSorter.onShellGroupCreated += OnGroupCreated;
             _shellSorter.onShellGroupContentUpdated += OnContentUpdated;
             _shellGroups = new List<ShellGroup>();
             _shellGroupParent = new GameObject("group_parent").transform;
             _shellGroupParent.SetParent(transform);
+            _previousPositions = new Stack<Vector3>();
 
-            Collapse();
+            ShellState = ShellStates.COLLAPSED;
+            GetComponent<SphereCollider>().radius = collapsedShellRadius;
+            SetCompressorButtonActive(false);
+            outerShell.SetPanelRadius(collapsedShellRadius);
         }
 
         void Update()

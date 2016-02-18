@@ -44,7 +44,7 @@ public class ZoomHandle : MonoBehaviour, IGrabbable {
     {
         _grabPoint = null;
         _isInteracting = false;
-        Destroy(gameObject);
+        //Destroy(gameObject);
     }
 
     public GameObject Owner { get { return gameObject; } }

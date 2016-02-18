@@ -47,7 +47,7 @@ public class HandAttachment : MonoBehaviour
                 close_things[j].tag != "NotGrabbable")
             {
                 IInteractable interactable = (IInteractable)close_things[j].GetComponent<T>();
-                if (interactable == null || !interactable.IsInteracting)
+                if (interactable == null || interactable.IsInteractable)
                 {
                     closestCollider = close_things[j];
                     closest_sqr_distance = sqr_distance;

@@ -35,7 +35,7 @@ namespace VolumetricLines
 		[SerializeField] 
 		[HideInInspector]
 		private Vector3 m_startPos;
-		
+
 		/// <summary>
 		/// The end position relative to the GameObject's origin
 		/// </summary>

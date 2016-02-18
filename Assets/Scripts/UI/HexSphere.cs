@@ -18,20 +18,24 @@ public class HexSphere : MonoBehaviour {
     public float farFade = 14.0f;
     public AnimationCurve handleFalloff;
 
-    private Vector3[] startDirections;
+    private Vector3[] _startDirections;
+    public Vector3[] StartDirections { get
+        {
+            if (_startDirections == null)
+            {
+                _startDirections = new Vector3[hexParent.childCount];
+                for (int i = 0; i < hexParent.childCount; i++)
+                    StartDirections[i] = (hexParent.GetChild(i).position - transform.position).normalized;
+            }
+            return _startDirections;
+        }
+    }
     private Material _innerMat;
 
     void Start () {
-        //manualHandles = new List<Transform>();
-        startDirections = new Vector3[hexParent.childCount];
-        for(int i = 0; i < hexParent.childCount; i++)
-        {
-            startDirections[i] = (hexParent.GetChild(i).position - transform.position).normalized;
-        }
-
-        //SetPanelRadius(handleRadius);
-        UpdatePanelScale(panelScale);
         _innerMat = innerSphere.GetComponent<Renderer>().material;
+        UpdateShereMaterials(0.0f);
+        UpdatePanelScale(panelScale);
     }
 
     void Update () {
@@ -55,13 +59,13 @@ public class HexSphere : MonoBehaviour {
             for (int handleindex = 0; handleindex < handlePositions.Length; handleindex++)
             {
                 handle = handlePositions[handleindex];
-                Vector3 unmovedPanelPosition = transform.position + (startDirections[i] * radius);
+                Vector3 unmovedPanelPosition = transform.position + (StartDirections[i] * radius);
                 float largestRadius = Mathf.Max(Vector3.Distance(handle, transform.position), radius);
                 float handleToPanelDist = Vector3.Distance(handle, unmovedPanelPosition);
                 panelRadiusScale += handleFalloff.Evaluate(Utils.MathTools.Clamp(Utils.MathTools.Remap(handleToPanelDist * handleRadius, 0.0f, largestRadius - radius, 1.0f, 0.0f), 0.0f, 1.0f));
                 largest = Mathf.Max(largestRadius, largest);
             }
-            panel.localPosition = startDirections[i] * ( radius + (panelRadiusScale * largest));
+            panel.localPosition = StartDirections[i] * ( radius + (panelRadiusScale * largest));
         }
     }
 
@@ -75,15 +79,15 @@ public class HexSphere : MonoBehaviour {
         radius = r;
         Debug.Log("Expanding shell to radius " + radius);
         LeanTweenType ease = LeanTweenType.easeOutQuint;
-        LeanTween.value(gameObject, (collapse) ? 1.0f : 0.0f, (collapse) ? 0.0f : 1.0f, duration).setOnUpdate(UpdateSphereSize).setEase(ease);
+        LeanTween.value(gameObject, (collapse) ? 1.0f : 0.0f, (collapse) ? 0.0f : 1.0f, duration).setOnUpdate(UpdateShereMaterials).setEase(ease);
         for (int i = 0; i < hexParent.childCount; i++)
         {
-            LeanTween.moveLocal(hexParent.GetChild(i).gameObject, startDirections[i] * radius, duration).setEase(ease);
+            LeanTween.moveLocal(hexParent.GetChild(i).gameObject, StartDirections[i] * radius, duration).setEase(ease);
         }
         LeanTween.scale(innerSphere, new Vector3(radius * 2, radius * 2, radius * 2), duration).setEase(ease);
     }
 
-    private void UpdateSphereSize(float t)
+    public void UpdateShereMaterials(float t)
     {
         UpdateInnerFresnel(t);
         UpdatePanelCloseFade(t);
@@ -111,7 +115,7 @@ public class HexSphere : MonoBehaviour {
         for (int i = 0; i < hexParent.childCount; i++)
         {
             Transform panel = hexParent.GetChild(i);
-            panel.localPosition = startDirections[i] * radius;
+            panel.localPosition = StartDirections[i] * radius;
         }
     }
 
