@@ -3,6 +3,8 @@
 *.Trashes
 *.pyc
 
+Assets/ShaderForge*
+
 Library
 *.suo
 *.vs
